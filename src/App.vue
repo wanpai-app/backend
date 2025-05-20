@@ -5,8 +5,8 @@ import { RouterLink, RouterView } from 'vue-router'
 <template>
   <nav>
     <RouterLink to="/admin">後台首頁</RouterLink>
+    <RouterLink to="/productdetailpage">product</RouterLink>
   </nav>
-
   <RouterView />
 </template>
 
