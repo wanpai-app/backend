@@ -7,7 +7,7 @@ on:
     branches: [main, develop]
 
 jobs:
-  build-and-lint:
+  frontend-backend-ci:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,11 +19,20 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install dependencies
+      # ===== Frontend =====
+      - name: Install frontend dependencies
+        working-directory: ./frontend
         run: npm install
 
-      - name: Lint
+      - name: Lint frontend
+        working-directory: ./frontend
         run: npm run lint
 
-      - name: Build
+      - name: Build frontend
+        working-directory: ./frontend
         run: npm run build
+
+      # ===== Backend =====
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm install
