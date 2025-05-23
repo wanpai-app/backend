@@ -12,13 +12,13 @@ onMounted(async () => {
   product.value = res.data
 })
 
-function addToCart(id) {
-  // 呼叫購物車 API
-}
+// function addToCart(id) {
+//   // 呼叫購物車 API
+// }
 
-function toggleFavorite(id) {
-  // 呼叫收藏/取消收藏 API
-}
+// function toggleFavorite(id) {
+//   // 呼叫收藏/取消收藏 API
+// }
 </script>
 
 <template>
@@ -31,8 +31,8 @@ function toggleFavorite(id) {
       <span :class="{ 'line-through': product.discountPrice }">${{ product.price }}</span>
     </div>
     <div class="mt-4 flex gap-2">
-      <button @click="addToCart(product.id)" class="bg-blue-500 text-white px-4 py-2 rounded">加入購物車</button>
-      <button @click="toggleFavorite(product.id)" class="bg-pink-500 text-white px-4 py-2 rounded">
+      <button class="bg-blue-500 text-white px-4 py-2 rounded"  @click="addToCart(product.id)">加入購物車</button>
+      <button class="bg-pink-500 text-white px-4 py-2 rounded"  @click="toggleFavorite(product.id)">
         {{ product.isFavorited ? '取消收藏' : '收藏' }}
       </button>
     </div>
