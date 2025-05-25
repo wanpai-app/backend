@@ -1,10 +1,20 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
 import ProductDetailPage from '../components/ProductDetailPage.vue'
+import HomeView from '../views/Home.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    {
+      path: '/',
+      name: 'home',
+      component: HomeView,
+    },
+    {
+      path: '/products/:id',
+      name: 'product-detail',
+      component: ProductDetailPage,
+    },
     {
       path: '/admin',
       name: 'admin',
@@ -30,17 +40,14 @@ const router = createRouter({
     {
       path: '/notification',
       name: 'notification',
-      component: () => import('../views/NotificationPage.vue')
+      component: () => import('../views/NotificationPage.vue'),
     },
-
-        {
-          path: '/productdetailpage',
-          name: 'productdetailpage',
-          component: ProductDetailPage,
-        }
+    {
+      path: '/productdetailpage',
+      name: 'productdetailpage',
+      component: ProductDetailPage,
+    },
   ],
-
-
 })
 
 export default router
