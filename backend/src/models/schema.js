@@ -1,4 +1,4 @@
-const { pgTable, serial, varchar, timestamp } = require('drizzle-orm/pg-core');
+const { pgTable, serial, varchar, timestamp } = require("drizzle-orm/pg-core");
 
 const users = pgTable('users', {
   id: serial('id').primaryKey(),
@@ -9,12 +9,11 @@ const users = pgTable('users', {
   updatedAt: timestamp('updated_at').defaultNow()
 });
 
-const db = require('../configs/db');
+const db = require("../configs/db");
 
 async function getProductById(id) {
-  const result = await db.query('SELECT * FROM products WHERE id = $1', [id]);
+  const result = await db.query("SELECT * FROM products WHERE id = $1", [id]);
   return result.rows[0];
 }
 
 module.exports = { users };
-

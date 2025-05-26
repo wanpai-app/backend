@@ -20,8 +20,10 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/api/users', userRoutes);
+//綠界使用的
+app.use("/api", ecpayRoutes);
 
+app.use("/api/users", userRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
