@@ -5,6 +5,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import PrimeVue from 'primevue/config'
+import Aura from '@primeuix/themes/aura'
 import 'primeicons/primeicons.css'
 
 const app = createApp(App);
@@ -12,13 +13,10 @@ const app = createApp(App);
 app.use(createPinia())
 app.use(router)
 app.use(PrimeVue, {
-    unstyled: false,
-    pt: {
-        datatable: {
-            root: { class: 'bg-gray-100' }
-        }
-    }
-})
+    theme: {
+      preset: Aura,
+    },
+  })
 
 app.mount('#app')
 

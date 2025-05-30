@@ -8,7 +8,7 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'HomeView.vue',
+      name: 'home',
       component: HomeView,
     },
     {
@@ -50,7 +50,7 @@ const router = createRouter({
     },
     {
       path: '/cart',
-      name: 'Cart',
+      name: 'cart',
       component: CartView,
     },
   ],
