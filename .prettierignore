@@ -1,0 +1,30 @@
+# 忽略編譯輸出與依賴
+node_modules
+dist
+build
+
+# 忽略環境與設定檔
+.env
+.env.* 
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# 忽略 log / 暫存
+*.log
+*.tmp
+
+# 忽略 git 專用的東西
+.git
+.gitignore
+
+# 忽略 IDE 的設定檔
+.vscode
+
+# 忽略 Prettier 自己的設定（避免格式化設定檔本身）
+.prettierrc
+.prettierrc.*
+.prettierignore
+
+# 可選：如果你有記錄 API 文件
+docs

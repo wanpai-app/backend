@@ -1,4 +1,4 @@
-name: CI
+name: Backend CI
 
 on:
   pull_request:
@@ -19,20 +19,11 @@ jobs:
         with:
           node-version: 18
 
-      # ===== Frontend =====
-      - name: Install frontend dependencies
-        working-directory: ./frontend
-        run: npm install
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Lint frontend
-        working-directory: ./frontend
+      - name: Run ESLint
         run: npm run lint
 
-      - name: Build frontend
-        working-directory: ./frontend
-        run: npm run build
-
-      # ===== Backend =====
-      - name: Install backend dependencies
-        working-directory: ./backend
-        run: npm install
+      - name: Run Prettier check
+        run: npm run format:check
