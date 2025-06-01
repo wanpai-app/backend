@@ -73,7 +73,34 @@ const login = async (req, res) => {
   }
 };
 
+const getProfile = async (req, res) => {
+  const userId = req.user.id
+  try {
+    const result = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1)
+    if (result.length === 0) return res.status(404).json({ message: '會員不存在' })
+    res.json(result[0])
+  } catch (err) {
+    res.status(500).json({ message: '伺服器錯誤', error: err.message })
+  }
+}
+
+const updateProfile = async (req, res) => {
+  const userId = req.user.id
+  const { username, email } = req.body
+
+  try {
+    await db.update(usersTable)
+      .set({ username, email })
+      .where(eq(usersTable.id, userId))
+    res.json({ message: '更新成功' })
+  } catch (err) {
+    res.status(500).json({ message: '更新失敗', error: err.message })
+  }
+}
+
 module.exports = {
   register,
   login,
+  getProfile,
+  updateProfile,
 };
