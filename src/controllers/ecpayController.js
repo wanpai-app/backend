@@ -46,11 +46,7 @@ exports.createOrder = async (req, res) => {
       tradeStatus: 'pending',
     });
 
-    res.json({
-      message: '訂單建立成功，請使用 ecpayHtml 進行跳轉。',
-      merchantTradeNo: MerchantTradeNo,
-      ecpayHtml: html,
-    });
+    res.send(html);
   } catch (error) {
     console.error('儲存訂單到資料庫失敗:', error);
     res.status(500).json({ error: '建立訂單失敗，請稍後再試。' });
