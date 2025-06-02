@@ -1,4 +1,4 @@
-require("dotenv").config();
+require('dotenv').config();
 
 module.exports = {
   merchantID: process.env.ECPAY_MERCHANT_ID,

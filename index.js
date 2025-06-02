@@ -1,20 +1,20 @@
-require("dotenv").config();
-const productRoutes = require("./src/routes/productRoutes");
-const cors = require("cors");
-const express = require("express");
-const userRoutes = require("./src/routes/userRoutes");
-const ecpayRoutes = require("./src/routes/ecpayRoutes");
+require('dotenv').config();
+const productRoutes = require('./src/routes/productRoutes');
+const cors = require('cors');
+const express = require('express');
+const userRoutes = require('./src/routes/userRoutes');
+const ecpayRoutes = require('./src/routes/ecpayRoutes');
 
 const app = express();
 
 app.use(express.json());
 app.use(cors());
-app.use("/api", productRoutes);
+app.use('/api', productRoutes);
 
 //綠界使用的
-app.use("/api", ecpayRoutes);
+app.use('/api', ecpayRoutes);
 
-app.use("/api/users", userRoutes);
+app.use('/api/users', userRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

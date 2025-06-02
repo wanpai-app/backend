@@ -1,14 +1,10 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const {
-  createOrder,
-  handleReturn,
-  clientReturn,
-} = require("../controllers/ecpayController");
-router.post("/create-order", createOrder);
+const { createOrder, handleReturn, clientReturn } = require('../controllers/ecpayController');
+router.post('/create-order', createOrder);
 
-router.post("/return", handleReturn);
+router.post('/return', handleReturn);
 
-router.get("/clientReturn", clientReturn);
+router.get('/clientReturn', clientReturn);
 
 module.exports = router;
