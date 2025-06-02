@@ -9,7 +9,7 @@ const getAllProducts = async (req, res) => {
     const rows = await db.select().from(productsTable);
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ error: '伺服器問題' });
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -27,7 +27,7 @@ const getProductById = async (req, res) => {
     }
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ error: '伺服器問題' });
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -47,7 +47,7 @@ const createProduct = async (req, res) => {
     });
     res.json('成功新增商品');
   } catch (err) {
-    res.status(500).json({ error: '伺服器問題' });
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -70,7 +70,7 @@ const updateProduct = async (req, res) => {
       .where(eq(productsTable.id, id));
     res.json('成功更新商品');
   } catch (err) {
-    res.status(500).json({ error: '伺服器問題' });
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -80,7 +80,7 @@ const deleteProduct = async (req, res) => {
     await db.delete(productsTable).where(eq(productsTable.id, req.params.id));
     res.json('商品已刪除');
   } catch (err) {
-    res.status(500).json({ error: '伺服器問題' });
+    res.status(500).json({ error: err.message });
   }
 };
 
