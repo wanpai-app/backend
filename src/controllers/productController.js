@@ -34,14 +34,14 @@ const getProductById = async (req, res) => {
 // 新增商品
 const createProduct = async (req, res) => {
   try {
-    const { name, description, img, price, status, currentStock } = req.body;
+    const { name, sku, description, price, status, stockOnHand } = req.body;
     await db.insert(productsTable).values({
       name,
+      sku,
       description,
-      img,
       price,
       status,
-      currentStock,
+      stockOnHand,
       createdAt: new Date(),
       updatedAt: new Date(),
     });

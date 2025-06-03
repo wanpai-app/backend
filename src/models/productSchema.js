@@ -2,12 +2,13 @@ const { pgTable, serial, varchar, integer, text, timestamp } = require('drizzle-
 
 const productsTable = pgTable('products', {
   id: serial().primaryKey().notNull(),
-  name: varchar({ length: 100 }).notNull(),
+  name: varchar({ length: 225 }).notNull(),
+  sku: varchar({ length: 255 }).notNull().unique(),
   description: text().notNull(),
-  img: varchar(),
   price: integer().notNull(),
   status: varchar().notNull().default('draft'),
-  currentStock: integer('current_stock'),
+  stockOnHand: integer('stock_on_hand').default(0),
+  stockReserved: integer('stock_reserved').default(0),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
