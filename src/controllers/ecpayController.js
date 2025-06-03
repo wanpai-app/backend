@@ -3,7 +3,7 @@ const ecpayConfig = require('../configs/ecpayConfig');
 const ecpay_payment = require('ecpay_aio_nodejs');
 const db = require('../configs/db');
 const { ordersTable } = require('../models/ecpaySchema');
-
+const { eq } = require('drizzle-orm');
 const options = {
   OperationMode: 'Test',
   MercProfile: {
@@ -55,8 +55,9 @@ exports.createOrder = async (req, res) => {
 
 exports.handleReturn = async (req, res) => {
   console.log('綠界回傳資料 (POST):', req.body);
+  const { RtnCode, MerchantTradeNo, RtnMsg, PaymentDate, TradeNo, SimulatePaid, CheckMacValue } =
+    req.body;
 
-  const { CheckMacValue } = req.body;
   const data = { ...req.body };
   delete data.CheckMacValue;
 
@@ -101,6 +102,7 @@ exports.handleReturn = async (req, res) => {
         .where(eq(ordersTable.merchantTradeNo, MerchantTradeNo));
 
       console.log(`資料庫訂單 ${MerchantTradeNo} 狀態已更新為 ${newTradeStatus}`);
+
       res.send('1|OK'); // 告知綠界已成功接收
     } catch (error) {
       console.error('更新訂單狀態時發生錯誤:', error);
@@ -110,9 +112,4 @@ exports.handleReturn = async (req, res) => {
     console.error('CheckMacValue 驗證失敗！拒絕處理綠界回傳資料。');
     res.status(400).send('0|CheckMacValue Error'); // 告知綠界驗證失敗
   }
-};
-
-exports.clientReturn = (req, res) => {
-  console.log('用戶跳轉回您的網站 (GET):', req.body, req.query);
-  res.render('return', { query: req.query });
 };
