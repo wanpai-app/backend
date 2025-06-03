@@ -55,16 +55,15 @@ const createProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const id = req.params.id;
-    const { name, description, img, price, status, currentStock } = req.body;
+    const { name, sku, description, price, status } = req.body;
     await db
       .update(productsTable)
       .set({
         name,
+        sku,
         description,
-        img,
         price,
         status,
-        currentStock,
         updatedAt: new Date(),
       })
       .where(eq(productsTable.id, id));
