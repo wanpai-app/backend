@@ -1,8 +1,8 @@
-const bcrypt = require('bcryptjs');
-const db = require('../configs/db');
-const jwt = require('jsonwebtoken');
-const { usersTable } = require('../models/userSchema');
-const { eq } = require('drizzle-orm');
+const bcrypt = require("bcryptjs");
+const db = require("../configs/db");
+const jwt = require("jsonwebtoken");
+const { usersTable } = require("../models/userSchema");
+const { eq, and, not } = require("drizzle-orm");
 
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -84,19 +84,48 @@ const getProfile = async (req, res) => {
   }
 }
 
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 const updateProfile = async (req, res) => {
-  const userId = req.user.id
-  const { username, email } = req.body
+  const userId = req.user.id;
+  const { username, email } = req.body;
+
+  if (!username || !email) {
+    return res.status(400).json({ error: "請提供 username 與 email" });
+  }
+
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ error: "Email 格式錯誤" });
+  }
 
   try {
-    await db.update(usersTable)
+    const existing = await db
+      .select()
+      .from(usersTable)
+      .where(
+        and(
+          eq(usersTable.email, email),
+          not(eq(usersTable.id, userId))
+        )
+      );
+
+    if (existing.length > 0) {
+      return res.status(409).json({ error: "此 email 已被其他會員使用" });
+    }
+
+    await db
+      .update(usersTable)
       .set({ username, email })
-      .where(eq(usersTable.id, userId))
-    res.json({ message: '更新成功' })
+      .where(eq(usersTable.id, userId));
+
+    res.json({ message: "更新成功" });
   } catch (err) {
-    res.status(500).json({ message: '更新失敗', error: err.message })
+    res.status(500).json({ message: "更新失敗", error: err.message });
   }
-}
+};
+
 
 module.exports = {
   register,
@@ -104,3 +133,4 @@ module.exports = {
   getProfile,
   updateProfile,
 };
+
