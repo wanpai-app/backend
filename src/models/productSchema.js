@@ -12,12 +12,12 @@ const { sql } = require('drizzle-orm');
 const productsTable = pgTable(
   'products',
   {
-    id: serial().primaryKey().notNull(),
-    name: varchar({ length: 225 }).notNull(),
-    sku: varchar({ length: 255 }).notNull().unique(),
-    description: text().notNull(),
-    price: integer().notNull(),
-    status: varchar().notNull().default('draft'),
+    id: serial('id').primaryKey().notNull(),
+    name: varchar('name', { length: 225 }).notNull(),
+    sku: varchar('sku', { length: 255 }).notNull().unique(),
+    description: text('description').notNull(),
+    price: integer('price').notNull(),
+    status: varchar('status', { length: 20 }).notNull().default('draft'),
     stockOnHand: integer('stock_on_hand').default(0),
     stockReserved: integer('stock_reserved').default(0),
     createdAt: timestamp('created_at').defaultNow(),
