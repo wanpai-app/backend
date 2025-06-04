@@ -9,12 +9,11 @@ router.post('/login', userController.login);
 router.get('/test-token', authenticateToken, (req, res) => {
   res.json({
     message: 'Token 驗證成功',
-    user: req.user
+    user: req.user,
   });
 });
 
-router.get('/profile', authenticateToken, userController.getProfile)
-router.put('/profile', authenticateToken, userController.updateProfile)
-
+router.get('/profile', authenticateToken, userController.getProfile);
+router.put('/profile', authenticateToken, userController.updateProfile);
 
 module.exports = router;
