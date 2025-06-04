@@ -84,9 +84,6 @@ const getProfile = async (req, res) => {
   }
 }
 
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
 
 const updateProfile = async (req, res) => {
   const userId = req.user.id;
