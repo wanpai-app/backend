@@ -38,3 +38,22 @@ CREATE TABLE "users" (
 	"updated_at" timestamp DEFAULT now(),
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );
+
+CREATE TYPE notification_type AS ENUM (
+  'order_created',
+  'order_shipped',
+  'order_delivered',
+  'promo',
+  'account'
+);
+
+CREATE TABLE notifications (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  type notification_type NOT NULL,
+  message TEXT NOT NULL,
+  order_id TEXT,
+  read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
