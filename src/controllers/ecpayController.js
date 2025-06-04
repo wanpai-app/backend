@@ -3,7 +3,7 @@ const ecpayConfig = require('../configs/ecpayConfig');
 const ecpay_payment = require('ecpay_aio_nodejs');
 const db = require('../configs/db');
 const { ordersTable } = require('../models/ecpaySchema');
-
+const { nanoid } = require('nanoid');
 const options = {
   OperationMode: 'Test',
   MercProfile: {
@@ -17,7 +17,7 @@ const options = {
 
 exports.createOrder = async (req, res) => {
   const { TotalAmount, TradeDesc, ItemName } = req.body;
-  const MerchantTradeNo = Date.now().toString();
+  const MerchantTradeNo = Date.now().toString() + nanoid(6);
   const MerchantTradeDate = new Date()
     .toLocaleString('zh-TW', {
       year: 'numeric',
