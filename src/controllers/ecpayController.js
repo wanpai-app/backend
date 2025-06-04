@@ -3,7 +3,8 @@ const ecpayConfig = require('../configs/ecpayConfig');
 const ecpay_payment = require('ecpay_aio_nodejs');
 const db = require('../configs/db');
 const { ordersTable } = require('../models/ecpaySchema');
-
+const { eq } = require('drizzle-orm');
+const { nanoid } = require('nanoid');
 const options = {
   OperationMode: 'Test',
   MercProfile: {
@@ -15,9 +16,11 @@ const options = {
   IsProjectContractor: false,
 };
 
+const create = new ecpay_payment(options);
+
 exports.createOrder = async (req, res) => {
   const { TotalAmount, TradeDesc, ItemName } = req.body;
-  const MerchantTradeNo = Date.now().toString();
+  const MerchantTradeNo = Date.now().toString() + nanoid(6);
   const MerchantTradeDate = new Date()
     .toLocaleString('zh-TW', {
       year: 'numeric',
@@ -46,7 +49,6 @@ exports.createOrder = async (req, res) => {
     PaymentType: 'aio',
   };
 
-  const create = new ecpay_payment(options);
   const html = create.payment_client.aio_check_out_all(base_param);
 
   try {
@@ -76,15 +78,6 @@ exports.handleReturn = async (req, res) => {
 
   // 使用已經實例化的 `create` 物件
   const checkValue = create.payment_client.helper.gen_chk_mac_value(data);
-
-  console.log(
-    '綠界驗證結果：',
-    CheckMacValue === checkValue,
-    '回傳 CheckMacValue:',
-    CheckMacValue,
-    '計算 CheckMacValue:',
-    checkValue
-  );
 
   // 1. 驗證 CheckMacValue
   if (CheckMacValue === checkValue) {
@@ -125,9 +118,4 @@ exports.handleReturn = async (req, res) => {
     console.error('CheckMacValue 驗證失敗！拒絕處理綠界回傳資料。');
     res.status(400).send('0|CheckMacValue Error'); // 告知綠界驗證失敗
   }
-};
-
-exports.clientReturn = (req, res) => {
-  console.log('用戶跳轉回您的網站 (GET):', req.body, req.query);
-  res.render('return', { query: req.query });
 };
