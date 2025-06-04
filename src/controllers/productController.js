@@ -16,7 +16,7 @@ const getAllProducts = async (req, res) => {
 // 拿特定商品
 const getProductById = async (req, res) => {
   try {
-    const id = req.params.id;
+    const id = Number(req.params.id);
     if (isNaN(id)) {
       return res.status(400).json({ error: '無效的ID' });
     }
@@ -25,7 +25,7 @@ const getProductById = async (req, res) => {
     if (rows.length === 0) {
       return res.status(404).json({ error: '查無此商品' });
     }
-    res.json(rows);
+    res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -35,8 +35,16 @@ const getProductById = async (req, res) => {
 const createProduct = async (req, res) => {
   try {
     const { name, sku, description, price, status, stockOnHand } = req.body;
-    // 簡單驗證（可依需求強化）
-    if (!name || !sku || !description || price == null || isNaN(price)) {
+    if (
+      !name ||
+      !sku ||
+      !description ||
+      price == null ||
+      isNaN(price) ||
+      !status ||
+      stockOnHand == null ||
+      isNaN(stockOnHand)
+    ) {
       return res.status(400).json({ error: '缺少必要欄位或格式錯誤' });
     }
 
@@ -62,9 +70,22 @@ const createProduct = async (req, res) => {
 // 修改商品
 const updateProduct = async (req, res) => {
   try {
-    const id = req.params.id;
-    const { name, sku, description, price, status } = req.body;
-    await db
+    const id = Number(req.params.id);
+    const { name, sku, description, price, status, stockOnHand } = req.body;
+    if (
+      !name ||
+      !sku ||
+      !description ||
+      price == null ||
+      isNaN(price) ||
+      !status ||
+      stockOnHand == null ||
+      isNaN(stockOnHand)
+    ) {
+      return res.status(400).json({ error: '缺少必要欄位或格式錯誤' });
+    }
+
+    const [insertedProduct] = await db
       .update(productsTable)
       .set({
         name,
@@ -72,10 +93,12 @@ const updateProduct = async (req, res) => {
         description,
         price,
         status,
+        stockOnHand,
         updatedAt: new Date(),
       })
-      .where(eq(productsTable.id, id));
-    res.json('成功更新商品');
+      .where(eq(productsTable.id, id))
+      .returning();
+    res.status(201).json(insertedProduct);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -84,8 +107,12 @@ const updateProduct = async (req, res) => {
 // 刪除商品
 const deleteProduct = async (req, res) => {
   try {
-    await db.delete(productsTable).where(eq(productsTable.id, req.params.id));
-    res.json('商品已刪除');
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: '無效的ID' });
+    }
+    await db.delete(productsTable).where(eq(productsTable.id, id));
+    res.json({ message: '商品已刪除' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
