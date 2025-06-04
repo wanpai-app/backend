@@ -35,17 +35,25 @@ const getProductById = async (req, res) => {
 const createProduct = async (req, res) => {
   try {
     const { name, sku, description, price, status, stockOnHand } = req.body;
-    await db.insert(productsTable).values({
-      name,
-      sku,
-      description,
-      price,
-      status,
-      stockOnHand,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-    res.json('成功新增商品');
+    // 簡單驗證（可依需求強化）
+    if (!name || !sku || !description || price == null || isNaN(price)) {
+      return res.status(400).json({ error: '缺少必要欄位或格式錯誤' });
+    }
+
+    const [insertedProduct] = await db
+      .insert(productsTable)
+      .values({
+        name,
+        sku,
+        description,
+        price,
+        status,
+        stockOnHand,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    res.status(201).json(insertedProduct);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
