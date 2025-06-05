@@ -1,5 +1,6 @@
 const {
   pgTable,
+  pgEnum,
   serial,
   varchar,
   integer,
@@ -8,6 +9,7 @@ const {
   check,
 } = require('drizzle-orm/pg-core');
 const { sql } = require('drizzle-orm');
+const statusEnum = pgEnum('status', ['draft', 'active', 'archived']);
 
 const productsTable = pgTable(
   'products',
@@ -27,4 +29,4 @@ const productsTable = pgTable(
   (table) => [check('price_check', sql`${table.price} >= 0`)]
 );
 
-module.exports = { productsTable };
+module.exports = { productsTable, statusEnum };
