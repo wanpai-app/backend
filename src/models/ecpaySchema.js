@@ -8,7 +8,7 @@ const {
   text,
 } = require('drizzle-orm/pg-core');
 
-const ecpayOrdersTable = pgTable('orders', {
+const ecpayOrdersTable = pgTable('ecpayOrders', {
   id: serial('id').primaryKey(),
   merchantTradeNo: varchar('merchant_trade_no', { length: 50 }).notNull(),
   ecpayTradeNo: varchar('ecpay_trade_no', { length: 20 }),
