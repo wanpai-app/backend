@@ -9,6 +9,7 @@ const usersTable = pgTable(
     username: varchar('username', { length: 50 }).notNull(),
     email: varchar('email', { length: 100 }).notNull().unique(),
     password: varchar('password', { length: 255 }).notNull(),
+    role: varchar("role", { length: 10 }).default("user"),
   })
 );
 
