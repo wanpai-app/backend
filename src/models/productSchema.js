@@ -13,6 +13,7 @@ const productsTable = pgTable(
   'products',
   {
     id: serial('id').primaryKey().notNull(),
+    ref_id: varchar('ref_id', { length: 20 }).unique(),
     name: varchar('name', { length: 225 }).notNull(),
     sku: varchar('sku', { length: 255 }).notNull().unique(),
     description: text('description').notNull(),
