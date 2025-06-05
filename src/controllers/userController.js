@@ -76,7 +76,11 @@ const login = async (req, res) => {
 const getProfile = async (req, res) => {
   const userId = req.user.id;
   try {
-    const result = await db.select({id:usersTable.id, email:usersTable.email, role:usersTable.role}).from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+    const result = await db
+      .select({ id: usersTable.id, email: usersTable.email, role: usersTable.role })
+      .from(usersTable)
+      .where(eq(usersTable.id, userId))
+      .limit(1);
     if (result.length === 0) return res.status(404).json({ message: '會員不存在' });
     res.json(result[0]);
   } catch (err) {
@@ -96,8 +100,8 @@ const updateProfile = async (req, res) => {
     return res.status(400).json({ error: 'Email 格式錯誤' });
   }
 
-  if (role && !["user", "admin"].includes(role)) {
-      return res.status(400).json({ error: "無效的角色" });
+  if (role && !['user', 'admin'].includes(role)) {
+    return res.status(400).json({ error: '無效的角色' });
   }
   try {
     const existing = await db
