@@ -19,7 +19,7 @@
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
-    "drizzle-orm": "^0.43.1",
+    "drizzle-orm": "^0.44.2",
     "ecpay_aio_nodejs": "^1.2.2",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.0",
