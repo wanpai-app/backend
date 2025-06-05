@@ -4,11 +4,7 @@ const cors = require('cors');
 const express = require('express');
 const userRoutes = require('./src/routes/userRoutes');
 const ecpayRoutes = require('./src/routes/ecpayRoutes');
-<<<<<<< HEAD
-
-=======
 const bodyParser = require('body-parser');
->>>>>>> d08ccc1 (feat: add ngrok file)
 const app = express();
 
 app.use(express.json());
