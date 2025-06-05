@@ -8,7 +8,7 @@ const {
   text,
 } = require('drizzle-orm/pg-core');
 
-const ordersTable = pgTable('orders', {
+const ecpayOrdersTable = pgTable('orders', {
   id: serial('id').primaryKey(),
   merchantTradeNo: varchar('merchant_trade_no', { length: 50 }).notNull(),
   ecpayTradeNo: varchar('ecpay_trade_no', { length: 20 }),
@@ -27,4 +27,4 @@ const ordersTable = pgTable('orders', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-module.exports = { ordersTable };
+module.exports = { ecpayOrdersTable };
