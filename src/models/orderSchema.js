@@ -16,7 +16,7 @@ const ordersTable = pgTable('orders', {
   userId: integer('user_id').references(() => usersTable.id),
   recepientName: varchar('recepient_name', { length: 100 }).notNull(),
   recepientPhone: varchar('recepient_phone', { length: 20 }).notNull(),
-  shippingAdress: varchar('shipping_address', { length: 255 }).notNull(),
+  shippingAddress: varchar('shipping_address', { length: 255 }).notNull(),
   totalPrice: integer('total_price').notNull(),
   quantity: integer('quantity').notNull(),
   status: orderStatusEnum('status').default('paid').notNull(),
