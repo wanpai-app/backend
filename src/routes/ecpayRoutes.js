@@ -3,6 +3,6 @@ const router = express.Router();
 const { createOrder, handleReturn } = require('../controllers/ecpayController');
 router.post('/create-order', createOrder);
 
-router.post('/return', handleReturn);
+router.post('/handleReturn', handleReturn);
 
 module.exports = router;
