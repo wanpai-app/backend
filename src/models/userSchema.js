@@ -1,6 +1,6 @@
-const { pgTable, serial, varchar } = require('drizzle-orm/pg-core');
-
+const { pgTable, serial, varchar,pgEnum } = require('drizzle-orm/pg-core');
 const { withTimestamps } = require('./core/helpers');
+const roleEnum = pgEnum('role', ['admin', 'user']);
 
 const usersTable = pgTable(
   'users',
@@ -9,7 +9,7 @@ const usersTable = pgTable(
     username: varchar('username', { length: 50 }).notNull(),
     email: varchar('email', { length: 100 }).notNull().unique(),
     password: varchar('password', { length: 255 }).notNull(),
-    role: varchar("role", { length: 10 }).default("user"),
+    role: roleEnum('role').default('user'),
   })
 );
 
