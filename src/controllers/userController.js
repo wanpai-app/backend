@@ -90,7 +90,7 @@ const getProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   const userId = req.user.id;
-  const { username, email, role } = req.body;
+  const { username, email } = req.body;
 
   if (!username || !email) {
     return res.status(400).json({ error: '請提供 username 與 email' });
@@ -100,9 +100,6 @@ const updateProfile = async (req, res) => {
     return res.status(400).json({ error: 'Email 格式錯誤' });
   }
 
-  if (role && !['user', 'admin'].includes(role)) {
-    return res.status(400).json({ error: '無效的角色' });
-  }
   try {
     const existing = await db
       .select()
