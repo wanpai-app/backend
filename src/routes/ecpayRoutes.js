@@ -1,8 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { createOrder, handleReturn } = require('../controllers/ecpayController');
+const { createOrder, handleReturn, clientReturn } = require('../controllers/ecpayController');
 router.post('/create-order', createOrder);
 
-router.post('/handleReturn', handleReturn);
+router.post('/return', handleReturn);
+
+router.get('/clientReturn', clientReturn);
 
 module.exports = router;
