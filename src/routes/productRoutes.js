@@ -8,15 +8,17 @@ const {
   deleteProduct,
 } = require('../controllers/productController');
 
-// for users
+const isAdmin = require('../middleware/isAdmin');
+const validate = require('../middleware/validate');
+const { productSchema } = require('../validators/productValidator');
+
+router.get('/admin', isAdmin, getAllProducts);
+router.get('/admin/:id', isAdmin, getProductById);
+router.post('/admin', isAdmin, validate(productSchema), createProduct);
+router.put('/admin/:id', isAdmin, validate(productSchema), updateProduct);
+router.delete('/admin/:id', isAdmin, deleteProduct);
+
 router.get('/', getAllProducts);
 router.get('/:id', getProductById);
-
-// for admin (之後可加 middleware 驗證 isAdmin)
-router.get('/admin', getAllProducts);
-router.get('/admin/:id', getProductById);
-router.post('/admin', createProduct);
-router.put('/admin/:id', updateProduct);
-router.delete('/admin/:id', deleteProduct);
 
 module.exports = router;
