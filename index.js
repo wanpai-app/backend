@@ -5,6 +5,7 @@ const productRoutes = require('./src/routes/productRoutes');
 const userRoutes = require('./src/routes/userRoutes');
 const ecpayRoutes = require('./src/routes/ecpayRoutes');
 const orderRoutes = require('./src/routes/orderRoutes');
+const shoppingCartRoutes = require('./src/routes/shoppingCartRoutes');
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use('/api', ecpayRoutes);
 
 app.use('/api/users', userRoutes);
 app.use('/api', orderRoutes);
+app.use('/api/cart', shoppingCartRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
