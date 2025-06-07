@@ -42,7 +42,6 @@ const createProduct = async (req, res) => {
   }
 };
 
-
 const updateProduct = async (req, res) => {
   const id = Number(req.params.id);
   if (isNaN(id)) return res.status(400).json({ error: '無效的ID' });
@@ -63,16 +62,12 @@ const updateProduct = async (req, res) => {
   }
 };
 
-
 const deleteProduct = async (req, res) => {
   const id = Number(req.params.id);
   if (isNaN(id)) return res.status(400).json({ error: '無效的ID' });
 
   try {
-    const deleted = await db
-      .delete(productsTable)
-      .where(eq(productsTable.id, id))
-      .returning();
+    const deleted = await db.delete(productsTable).where(eq(productsTable.id, id)).returning();
 
     if (deleted.length === 0) {
       return res.status(404).json({ error: '查無此商品' });
