@@ -24,4 +24,5 @@ const stockLogsTable = pgTable('stock_logs', {
 
 module.exports = {
   stockLogsTable,
+  stockReasonEnum,
 };

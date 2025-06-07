@@ -1,9 +1,10 @@
 require('dotenv').config();
-const productRoutes = require('./src/routes/productRoutes');
 const cors = require('cors');
 const express = require('express');
 const userRoutes = require('./src/routes/userRoutes');
+const productRoutes = require('./src/routes/productRoutes');
 const ecpayRoutes = require('./src/routes/ecpayRoutes');
+const orderRoutes = require('./src/routes/orderRoutes');
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.use('/api', productRoutes);
 app.use('/api', ecpayRoutes);
 
 app.use('/api/users', userRoutes);
+app.use('/api', orderRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
