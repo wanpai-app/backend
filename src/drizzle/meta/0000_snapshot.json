@@ -178,12 +178,8 @@
           "name": "product_images_ref_id_products_ref_id_fk",
           "tableFrom": "product_images",
           "tableTo": "products",
-          "columnsFrom": [
-            "ref_id"
-          ],
-          "columnsTo": [
-            "ref_id"
-          ],
+          "columnsFrom": ["ref_id"],
+          "columnsTo": ["ref_id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -191,12 +187,8 @@
           "name": "product_images_product_id_products_id_fk",
           "tableFrom": "product_images",
           "tableTo": "products",
-          "columnsFrom": [
-            "product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "cascade"
         }
@@ -206,10 +198,7 @@
         "product_images_ref_id_img_url_unique": {
           "name": "product_images_ref_id_img_url_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "ref_id",
-            "img_url"
-          ]
+          "columns": ["ref_id", "img_url"]
         }
       },
       "policies": {},
@@ -299,16 +288,12 @@
         "products_ref_id_unique": {
           "name": "products_ref_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "ref_id"
-          ]
+          "columns": ["ref_id"]
         },
         "products_sku_unique": {
           "name": "products_sku_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "sku"
-          ]
+          "columns": ["sku"]
         }
       },
       "policies": {},
@@ -370,9 +355,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
