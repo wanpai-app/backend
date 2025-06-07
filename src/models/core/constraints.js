@@ -3,7 +3,7 @@ const { unique } = require("drizzle-orm/pg-core");
 function fkTo(table, opts = {}) {
   return (col) =>
     col.references(() => table.id, {
-      onDelete: opts.onDelete || "no action",
+      onDelete: opts.onDelete || "set null",
       onUpdate: opts.onUpdate || "cascade",
     });
 }

@@ -10,14 +10,13 @@ const {
 
 const { productsTable } = require("./productSchema");
 const { withTimestamps } = require("./core/helpers");
-const { fkTo } = require("./core/constraints");
 
 const productImagesTable = pgTable(
   "product_images",
   {
     id: serial("id").primaryKey(),
     refId: varchar("ref_id", { length: 20 }).references(() => productsTable.refId),
-    productId: fkTo(productsTable, { onDelete: "set null" })(integer("product_id")),
+    productId: integer("product_id").references(() => productsTable.id),
     imgUrl: text("img_url").notNull(),
     orderIndex: integer("order_index"),
     isCover: boolean("is_cover").default(false),
