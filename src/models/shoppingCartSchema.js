@@ -15,8 +15,12 @@ const cartItemsTable = pgTable(
   'cart_items',
   {
     id: serial('id').primaryKey(),
-    productId: integer('product_id').notNull().references(() => productsTable.id),
-    userId: integer('user_id').notNull().references(() => usersTable.id),
+    productId: integer('product_id')
+      .notNull()
+      .references(() => productsTable.id),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => usersTable.id),
     quantity: integer('quantity').notNull(),
     unitPrice: numeric('unit_price', { precision: 12, scale: 2 }).notNull(),
     addedAt: timestamp('added_at').defaultNow().notNull(),
