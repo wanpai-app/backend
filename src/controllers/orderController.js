@@ -38,3 +38,22 @@ const softDeleteOrder = async (req, res) => {
 };
 
 module.exports = { updateOrder, softDeleteOrder };
+
+const getOrderById = async (req, res) => {
+  const id = parseInt(req.params.id);
+
+  try {
+    const order = await db.select().from(ordersTable).where(eq(ordersTable.id, id));
+
+    if (!order || order.length === 0) {
+      return res.status(404).json({ message: '找不到訂單' });
+    }
+
+    res.json(order[0]);
+  } catch (error) {
+    console.error('無法取得訂單：', error);
+    res.status(500).json({ message: '伺服器錯誤' });
+  }
+};
+
+module.exports = { getOrderById };
