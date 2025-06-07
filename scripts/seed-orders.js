@@ -18,7 +18,7 @@ async function insertFakeOrder() {
     await db.insert(ordersTable).values({
       orderNumber: 'A88888888',
       userId: 1, // 連到剛剛那位使用者
-      recipientName: '雨雨',
+      recipientName: '布魯托',
       recipientPhone: '0912345678',
       shippingAddress: '台北市夢想路 1 號',
       totalPrice: 999,
