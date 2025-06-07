@@ -15,11 +15,11 @@ async function insertFakeUser() {
     }
 
     await db.insert(usersTable).values({
-      id: 1, // 固定 ID 方便其他 seed 連接
+      id: 1, 
       username: 'yuyu',
       email: 'yuyu@example.com',
       password: '123456', // 測試用
-      role: 'user', // 如果有 enum 記得 role 要合法
+      role: 'user', 
     });
 
     console.log('✅ 成功新增一筆假使用者');
