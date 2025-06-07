@@ -34,8 +34,9 @@ const getProductById = async (req, res) => {
 // 新增商品
 const createProduct = async (req, res) => {
   try {
-    const { name, sku, description, price, status, stockOnHand } = req.body;
+    const { refId, name, sku, description, price, status, stockOnHand } = req.body;
     if (
+      !refId ||
       !name ||
       !sku ||
       !description ||
@@ -51,6 +52,7 @@ const createProduct = async (req, res) => {
     const [insertedProduct] = await db
       .insert(productsTable)
       .values({
+        refId,
         name,
         sku,
         description,
@@ -71,8 +73,9 @@ const createProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const { name, sku, description, price, status, stockOnHand } = req.body;
+    const { refId, name, sku, description, price, status, stockOnHand } = req.body;
     if (
+      !refId ||
       !name ||
       !sku ||
       !description ||
@@ -88,6 +91,7 @@ const updateProduct = async (req, res) => {
     const [insertedProduct] = await db
       .update(productsTable)
       .set({
+        refId,
         name,
         sku,
         description,
@@ -98,7 +102,7 @@ const updateProduct = async (req, res) => {
       })
       .where(eq(productsTable.id, id))
       .returning();
-    res.status(201).json(insertedProduct);
+    res.status(200).json(insertedProduct);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -111,8 +115,11 @@ const deleteProduct = async (req, res) => {
     if (isNaN(id)) {
       return res.status(400).json({ error: '無效的ID' });
     }
-    await db.delete(productsTable).where(eq(productsTable.id, id));
-    res.json({ message: '商品已刪除' });
+    const deletedRows = await db.delete(productsTable).where(eq(productsTable.id, id)).returning();
+    if (deletedRows.length === 0) {
+      return res.status(404).json({ error: '查無此商品' });
+    }
+res.json({ message: '商品已刪除' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -1,6 +1,7 @@
 require('dotenv').config();
-const cors = require('cors');
 const express = require('express');
+const cors = require('cors');
+const productRoutes = require('./src/routes/productRoutes');
 const userRoutes = require('./src/routes/userRoutes');
 const productRoutes = require('./src/routes/productRoutes');
 const ecpayRoutes = require('./src/routes/ecpayRoutes');
@@ -10,7 +11,7 @@ const app = express();
 
 app.use(express.json());
 app.use(cors());
-app.use('/api', productRoutes);
+app.use('/api/products', productRoutes);
 
 //綠界使用的
 app.use('/api', ecpayRoutes);
