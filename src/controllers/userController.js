@@ -54,19 +54,19 @@ const login = async (req, res) => {
   try {
     const user = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
     if (user.length === 0) {
-      return res.status(401).json({ error: '帳號或密碼錯誤' });
+      return res.status(404).json({ error: 'Email未註冊' });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user[0].password);
     if (!isPasswordValid) {
-      return res.status(401).json({ error: '帳號或密碼錯誤' });
+      return res.status(401).json({ error: '密碼錯誤' });
     }
 
-    const token = jwt.sign({ id: user[0].id, email: user[0].email }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: user[0].id, email: user[0].email, role: user[0].role }, process.env.JWT_SECRET, {
       expiresIn: '1d',
     });
 
-    res.status(200).json({ message: '登入成功', token });
+    res.status(200).json({ message: '登入成功', token, role: user[0].role});
   } catch (err) {
     console.error('登入失敗', err);
     res.status(500).json({ error: '伺服器錯誤' });
