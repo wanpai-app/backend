@@ -20,4 +20,4 @@ const productsTable = pgTable(
   (table) => [check('price_check', sql`${table.price} >= 0`)]
 );
 
-module.exports = { productsTable };
+module.exports = { productsTable, statusEnum  };
