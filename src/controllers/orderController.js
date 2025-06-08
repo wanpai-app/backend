@@ -2,6 +2,31 @@ require('express');
 const db = require('../configs/db');
 const { ordersTable } = require('../models/orderSchema');
 const { eq } = require('drizzle-orm');
+const { nanoid } = require('nanoid');
+
+const generateOrderId = () => {
+  const now = new Date();
+  const yyyyMMdd = now.toISOString().slice(0, 10).replace(/-/g, ''); // '20250609'
+  const randomPart = nanoid(6);
+  return `OD-${yyyyMMdd}-${randomPart}`;
+};
+
+const createOrder = async (req, res) => {
+  try {
+    const [insertedOrder] = await db
+      .insert(ordersTable)
+      .values({
+        orderNumber: generateOrderId(),
+        ...req.body,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    res.status(201).json(insertedOrder);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
 const getOrderById = async (req, res) => {
   const id = Number(req.params.id);
@@ -20,18 +45,13 @@ const getOrderById = async (req, res) => {
 
 const updateOrder = async (req, res) => {
   const id = Number(req.params.id);
-  const { recipientName, recipientPhone, shippingAddress, status } = req.body;
-  if (!recipientName || !recipientPhone || !shippingAddress || !status) {
-    return res.status(400).json({ error: '缺少必要欄位' });
-  }
+  if (isNaN(id)) return res.status(400).json({ error: '無效的ID' });
+
   try {
     const [insertedOrder] = await db
       .update(ordersTable)
       .set({
-        recipientName,
-        recipientPhone,
-        shippingAddress,
-        status,
+        ...req.body,
         updatedAt: new Date(),
       })
       .where(eq(ordersTable.id, id))
@@ -44,6 +64,8 @@ const updateOrder = async (req, res) => {
 
 const softDeleteOrder = async (req, res) => {
   const id = Number(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ error: '無效的ID' });
+
   try {
     await db.update(ordersTable).set({ isDeleted: true }).where(eq(ordersTable.id, id));
     res.json({ message: '訂單已軟刪除' });
@@ -52,4 +74,4 @@ const softDeleteOrder = async (req, res) => {
   }
 };
 
-module.exports = { getOrderById, updateOrder, softDeleteOrder };
+module.exports = { createOrder, getOrderById, updateOrder, softDeleteOrder };

@@ -8,7 +8,7 @@ console.log('📦 DATABASE_URL:', process.env.DATABASE_URL); // debug 用
 
 module.exports = defineConfig({
   out: './src/drizzle',
-  schema: './src/models/**/*.js', // 在models底下的所有 ***.js
+  schema: './src/models/*Schema.js', // 在models底下的所有 ***.js
   dialect: 'postgresql',
   dbCredentials: {
     url: process.env.DATABASE_URL,

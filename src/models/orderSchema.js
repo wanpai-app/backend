@@ -10,6 +10,7 @@ const {
 const { usersTable } = require('./userSchema');
 
 const orderStatusEnum = pgEnum('order_status', [
+  'pending',
   'paid',
   'cancelled',
   'refunded',
@@ -27,7 +28,7 @@ const ordersTable = pgTable('orders', {
   shippingAddress: varchar('shipping_address', { length: 255 }).notNull(),
   totalPrice: integer('total_price').notNull(),
   quantity: integer('quantity').notNull(),
-  status: orderStatusEnum('status').default('paid').notNull(),
+  status: orderStatusEnum('status').default('pending').notNull(),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
   isDeleted: boolean('is_deleted').default(false),
