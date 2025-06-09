@@ -8,8 +8,7 @@
  *   node scripts/seed-orders.js --count=10  // 指定筆數
  */
 const db = require('../src/configs/db');
-const { eq } = require('drizzle-orm');
-const { ordersTable, orderStatusEnum } = require('../src/models/orderSchema');
+const { ordersTable } = require('../src/models/orderSchema');
 const { usersTable } = require('../src/models/userSchema');
 const { faker } = require('@faker-js/faker');
 const minimist = require('minimist');
@@ -47,7 +46,7 @@ async function insertFakeOrders() {
         orderNumber: generateOrderNumber(index),
         userId: user.id,
         recipientName: faker.person.fullName(),
-        recipientPhone: faker.phone.number('09########'),
+        recipientPhone: faker.phone.number().slice(0, 20),
         shippingAddress: faker.location.streetAddress({ useFullAddress: true }),
         totalPrice: faker.number.int({ min: 500, max: 5000 }),
         quantity: faker.number.int({ min: 1, max: 5 }),
@@ -57,8 +56,16 @@ async function insertFakeOrders() {
       };
     });
 
-    await db.insert(ordersTable).values(orders);
-    console.log(` 成功插入 ${count} 筆訂單資料！`);
+   for (let i = 0; i < orders.length; i++) {
+     try {
+       await db.insert(ordersTable).values(orders[i]);
+     } catch (e) {
+       console.error(` 第 ${i + 1} 筆插入失敗`, orders[i]);
+       throw e; 
+     }
+   }
+   console.log(` 成功插入 ${count} 筆訂單資料！`);
+
   } catch (err) {
     console.error(' 插入訂單失敗：', err);
   }
