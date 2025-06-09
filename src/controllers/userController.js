@@ -62,11 +62,15 @@ const login = async (req, res) => {
       return res.status(401).json({ error: '密碼錯誤' });
     }
 
-    const token = jwt.sign({ id: user[0].id, email: user[0].email, role: user[0].role }, process.env.JWT_SECRET, {
-      expiresIn: '1d',
-    });
+    const token = jwt.sign(
+      { id: user[0].id, email: user[0].email, role: user[0].role },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: '1d',
+      }
+    );
 
-    res.status(200).json({ message: '登入成功', token, role: user[0].role});
+    res.status(200).json({ message: '登入成功', token, role: user[0].role });
   } catch (err) {
     console.error('登入失敗', err);
     res.status(500).json({ error: '伺服器錯誤' });
