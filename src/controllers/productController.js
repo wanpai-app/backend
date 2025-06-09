@@ -155,7 +155,7 @@ const deleteProduct = async (req, res) => {
   if (isNaN(id)) return res.status(400).json({ error: '無效的ID' });
 
   try {
-    const deleted = await db
+    const [deleted] = await db
       .update(productsTable)
       .set({ isDeleted: true })
       .where(eq(productsTable.id, id))
@@ -165,7 +165,7 @@ const deleteProduct = async (req, res) => {
       return res.status(404).json({ error: '查無此商品' });
     }
 
-    res.json({ message: '商品已刪除' });
+    res.statsu(201).json(deleted);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
