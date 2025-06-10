@@ -22,10 +22,7 @@ const getAllProducts = async (req, res) => {
       })
       .from(productImagesTable)
       .where(
-        and(
-          inArray(productImagesTable.productId, productIds),
-          eq(productImagesTable.isCover, true)
-        )
+        and(inArray(productImagesTable.productId, productIds), eq(productImagesTable.isCover, true))
       );
 
     const coverMap = new Map();
@@ -75,10 +72,7 @@ const getProductById = async (req, res) => {
   if (isNaN(id)) return res.status(400).json({ error: '無效的ID' });
 
   try {
-    const rows = await db
-      .select()
-      .from(productsTable)
-      .where(eq(productsTable.id, id));
+    const rows = await db.select().from(productsTable).where(eq(productsTable.id, id));
 
     if (rows.length === 0) return res.status(404).json({ error: '查無此商品' });
 
@@ -91,9 +85,7 @@ const getProductById = async (req, res) => {
       .orderBy(asc(productImagesTable.orderIndex));
 
     const coverImage =
-      images.find((img) => img.isCover) ||
-      images.find((img) => img.orderIndex === 0) ||
-      images[0];
+      images.find((img) => img.isCover) || images.find((img) => img.orderIndex === 0) || images[0];
 
     const previewImages = images.filter((img) => img.id !== coverImage?.id).slice(0, 2);
 
