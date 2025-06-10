@@ -1,7 +1,15 @@
-const { pgTable, serial, varchar, integer, text, boolean, unique } = require('drizzle-orm/pg-core');
+const {
+  pgTable,
+  serial,
+  varchar,
+  integer,
+  text,
+  boolean,
+  unique,
+  timestamp,
+} = require('drizzle-orm/pg-core');
 
 const { productsTable } = require('./productSchema');
-const { withTimestamps } = require('./core/helpers');
 
 const productImagesTable = pgTable(
   'product_images',
@@ -12,11 +20,12 @@ const productImagesTable = pgTable(
     imgUrl: text('img_url').notNull(),
     orderIndex: integer('order_index'),
     isCover: boolean('is_cover').default(false),
-    ...withTimestamps(),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
   },
-  {
-    uniqueConstraints: [unique('unique_ref_img').on('refId', 'imgUrl')],
-  }
+  (table) => ({
+    uniqueRefImg: unique('unique_ref_img').on(table.refId, table.imgUrl),
+  })
 );
 
 module.exports = { productImagesTable };
