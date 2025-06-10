@@ -23,14 +23,7 @@ function generateOrderNumber(index) {
   return `OD-${yyyyMMdd}-${serial}`;
 }
 
-const statusOptions = [
-  'paid',
-  'cancelled',
-  'refunded',
-  'shipped',
-  'delivered',
-  'returned',
-];
+const statusOptions = ['paid', 'cancelled', 'refunded', 'shipped', 'delivered', 'returned'];
 
 async function insertFakeOrders() {
   try {
@@ -56,16 +49,15 @@ async function insertFakeOrders() {
       };
     });
 
-   for (let i = 0; i < orders.length; i++) {
-     try {
-       await db.insert(ordersTable).values(orders[i]);
-     } catch (e) {
-       console.error(` 第 ${i + 1} 筆插入失敗`, orders[i]);
-       throw e; 
-     }
-   }
-   console.log(` 成功插入 ${count} 筆訂單資料！`);
-
+    for (let i = 0; i < orders.length; i++) {
+      try {
+        await db.insert(ordersTable).values(orders[i]);
+      } catch (e) {
+        console.error(` 第 ${i + 1} 筆插入失敗`, orders[i]);
+        throw e;
+      }
+    }
+    console.log(` 成功插入 ${count} 筆訂單資料！`);
   } catch (err) {
     console.error(' 插入訂單失敗：', err);
   }
