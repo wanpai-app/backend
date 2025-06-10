@@ -22,7 +22,7 @@ const cartItemsTable = pgTable(
       .notNull()
       .references(() => usersTable.id),
     quantity: integer('quantity').notNull(),
-    unitPrice: numeric('unit_price', { precision: 12, scale: 2 }).notNull(),
+    priceAtAdd: numeric('price_at_add', { precision: 8 }).notNull(),
     addedAt: timestamp('added_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
     softDel: boolean('soft_del').default(false).notNull(),
