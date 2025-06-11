@@ -1,5 +1,5 @@
 const db = require('../configs/db');
-const { cartItemsTable } = require('../models/shoppingCartSchema');
+const { cartItemsTable } = require('../models/cartSchema');
 const { productsTable } = require('../models/productSchema');
 const { eq, and } = require('drizzle-orm');
 
@@ -12,7 +12,7 @@ const getCart = async (req, res) => {
         id: cartItemsTable.id,
         productId: cartItemsTable.productId,
         quantity: cartItemsTable.quantity,
-        unitPrice: cartItemsTable.unitPrice,
+        priceAtAdd: cartItemsTable.priceAtAdd,
         addedAt: cartItemsTable.addedAt,
         product: {
           name: productsTable.name,
@@ -85,7 +85,7 @@ const addToCart = async (req, res) => {
         userId,
         productId,
         quantity,
-        unitPrice: product[0].price,
+        priceAtAdd: product[0].price,
         addedAt: new Date(),
         updatedAt: new Date(),
       })
