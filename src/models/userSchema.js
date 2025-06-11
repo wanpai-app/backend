@@ -1,5 +1,5 @@
 const { pgTable, serial, varchar, timestamp } = require('drizzle-orm/pg-core');
-
+const roleEnum = pgEnum('role', ['admin', 'user']);
 const usersTable = pgTable('users', {
   id: serial('id').primaryKey(),
   username: varchar('username', { length: 50 }).notNull(),
@@ -9,4 +9,4 @@ const usersTable = pgTable('users', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-module.exports = { usersTable };
+module.exports = { usersTable, roleEnum };

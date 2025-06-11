@@ -10,7 +10,7 @@ const app = express();
 
 app.use(express.json());
 app.use(cors());
-app.use('/api/products', productRoutes);
+app.use('/api', productRoutes);
 
 //綠界使用的
 app.use('/api', ecpayRoutes);
