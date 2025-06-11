@@ -6,7 +6,7 @@ const {
   updateCartItem,
   removeFromCart,
   clearCart,
-} = require('../controllers/shoppingCartController');
+} = require('../controllers/cartController');
 const authenticateToken = require('../middleware/auth');
 
 // 讓所有購物車路由都需要 JWT 驗證

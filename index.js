@@ -5,7 +5,7 @@ const productRoutes = require('./src/routes/productRoutes');
 const userRoutes = require('./src/routes/userRoutes');
 const ecpayRoutes = require('./src/routes/ecpayRoutes');
 const orderRoutes = require('./src/routes/orderRoutes');
-const cartRoutes = require('./src/routes/shoppingCartRoutes');
+const cartRoutes = require('./src/routes/cartRoutes');
 
 const app = express();
 
