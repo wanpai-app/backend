@@ -7,6 +7,7 @@ const {
   text,
   check,
   timestamp,
+  boolean,
 } = require('drizzle-orm/pg-core');
 const { sql } = require('drizzle-orm');
 
@@ -26,6 +27,7 @@ const productsTable = pgTable(
     stockReserved: integer('stock_reserved').default(0),
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),
+    isDeleted: boolean('is_deleted').default(false),
   },
   (table) => [check('price_check', sql`${table.price} >= 0`)]
 );
