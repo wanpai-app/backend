@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+
 const { notificationsTable } = require('../models/notificationSchema');
 const { eq, desc } = require('drizzle-orm');
 const db = require('../configs/db');
@@ -18,7 +19,7 @@ router.get('/', authenticateToken, async (req, res) => {
 
     res.json(notifications);
   } catch (error) {
-    console.error('取得通知失敗:', error);
+    console.error('取得通知失敗：', error);
     res.status(500).json({ error: '伺服器錯誤，無法取得通知' });
   }
 });
@@ -38,13 +39,9 @@ router.post('/', authenticateToken, async (req, res) => {
 
     res.status(201).json({ message: '通知已建立' });
   } catch (error) {
-    console.error('建立通知失敗:', error);
+    console.error('建立通知失敗：', error);
     res.status(500).json({ error: '建立通知失敗' });
   }
 });
 
 module.exports = router;
-
-
-  
-  
