@@ -1,15 +1,18 @@
 const db = require('../configs/db');
 const { productsTable } = require('../models/productSchema');
 const { productImagesTable } = require('../models/productImageSchema');
-
 const { inArray, eq, and, asc } = require('drizzle-orm');
 
 const getAllProducts = async (req, res) => {
   try {
-    const products = await db
-      .select()
-      .from(productsTable)
-      .where(eq(productsTable.status, 'active'));
+    const status = req.query.status;
+    let query = db.select().from(productsTable).where(eq(productsTable.isDeleted, false));
+
+    if (status && status !== 'all') {
+      query = query.where(eq(productsTable.status, status));
+    }
+
+    const products = await query;
 
     if (products.length === 0) return res.json([]);
 
@@ -145,7 +148,11 @@ const deleteProduct = async (req, res) => {
   if (isNaN(id)) return res.status(400).json({ error: '無效的ID' });
 
   try {
-    const deleted = await db.delete(productsTable).where(eq(productsTable.id, id)).returning();
+    const deleted = await db
+      .update(productsTable)
+      .set({ isDeleted: true })
+      .where(eq(productsTable.id, id))
+      .returning();
 
     if (deleted.length === 0) {
       return res.status(404).json({ error: '查無此商品' });
