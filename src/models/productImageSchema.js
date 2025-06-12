@@ -23,9 +23,7 @@ const productImagesTable = pgTable(
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),
   },
-  (table) => ({
-    uniqueRefImg: unique('unique_ref_img').on(table.refId, table.imgUrl),
-  })
+  (table) => [unique('unique_ref_img').on(table.refId, table.imgUrl)]
 );
 
 module.exports = { productImagesTable };
