@@ -7,16 +7,16 @@ const getAllProducts = async (req, res) => {
   const isAdmin = req.user?.role === 'admin';
   try {
     const status = req.query.status;
-    let query = db
-      .select()
-      .from(productsTable)
-      .where(eq(productsTable.isDeleted, false))
-      .orderBy(productsTable.id);
+    let query = db.select().from(productsTable).orderBy(productsTable.id);
 
     if (!isAdmin) {
-      query = query.where(eq(productsTable.status, 'active'));
+      query = query.where(
+        and(eq(productsTable.isDeleted, false), eq(productsTable.status, 'active'))
+      );
     } else if (status && status !== 'all') {
-      query = query.where(eq(productsTable.status, status));
+      query = query.where(
+        and(eq(productsTable.isDeleted, false), eq(productsTable.status, status))
+      );
     }
 
     const products = await query;
