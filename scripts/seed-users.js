@@ -12,7 +12,7 @@
  *   node scripts/seed-users.js --reset # ➜ 清空 orders 和 users，再新增
  */
 
-const db = require('../src/configs/db');
+const db = require('./db-raw');
 const { eq } = require('drizzle-orm');
 const { usersTable } = require('../src/models/userSchema');
 const minimist = require('minimist');
@@ -20,7 +20,7 @@ const { sql } = require('drizzle-orm');
 
 const args = minimist(process.argv.slice(2));
 
-async function insertFakeUser() {
+async function insertFakeUsers() {
   try {
     if (args.reset) {
       await db.execute(sql`DELETE FROM orders`);
@@ -35,15 +35,24 @@ async function insertFakeUser() {
       process.exit(0);
     }
 
-    await db.insert(usersTable).values({
-      id: 1,
-      username: 'yuyu',
-      email: 'yuyu@example.com',
-      password: '123456', // 測試用密碼
-      role: 'user',
-    });
+    await db.insert(usersTable).values([
+      {
+        id: 1,
+        username: 'yuyu',
+        email: 'yuyu@example.com',
+        password: '123456', // 測試用密碼
+        role: 'user',
+      },
+      {
+        id: 2,
+        username: 'admin',
+        email: 'admin@example.com',
+        password: 'admin123', // 測試用密碼
+        role: 'admin',
+      },
+    ]);
 
-    console.log(' 成功新增一筆假使用者');
+    console.log(' 成功新增 user 和 admin 使用者');
     process.exit(0);
   } catch (err) {
     console.error(' 新增使用者失敗：', err);
@@ -51,4 +60,4 @@ async function insertFakeUser() {
   }
 }
 
-insertFakeUser();
+insertFakeUsers();
