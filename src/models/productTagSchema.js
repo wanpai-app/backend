@@ -1,7 +1,7 @@
 const { pgTable, serial, integer } = require('drizzle-orm/pg-core');
 
 const { tagsTable } = require('./tagSchema');
-const { productsTable } = require('./productsSchema');
+const { productsTable } = require('./productSchema');
 
 const productTagSTable = pgTable('product_tags', {
   id: serial('id').primaryKey(),
