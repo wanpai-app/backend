@@ -11,8 +11,5 @@ router.get('/orders/:id', getOrderById);
 router.get('/admin/orders/:id', getOrderById);
 router.put('/admin/orders/:id', updateOrder);
 router.delete('/admin/orders/:id', softDeleteOrder);
-const { getOrderById } = require('../controllers/orderController');
-
-router.get('/orders/:id', getOrderById);
 
 module.exports = router;
