@@ -54,7 +54,7 @@ const login = async (req, res) => {
 
   try {
     const user = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
-    
+
     if (user.length === 0) {
       return res.status(401).json({ error: 'Email 或密碼錯誤' });
     }
