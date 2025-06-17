@@ -53,6 +53,7 @@ const login = async (req, res) => {
 
   try {
     const user = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
+    console.log(user);
     if (user.length === 0) {
       return res.status(404).json({ error: 'Email未註冊' });
     }
