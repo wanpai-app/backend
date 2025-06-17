@@ -22,16 +22,14 @@ const cartItemsTable = pgTable(
       .notNull()
       .references(() => usersTable.id),
     quantity: integer('quantity').notNull(),
-    priceAtAdd: numeric('price_at_add', { precision: 8 })
-      .notNull()
-      .references(() => productsTable.price),
+    priceAtAdd: numeric('price_at_add', { precision: 8 }).notNull(),
     addedAt: timestamp('added_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
     softDel: boolean('soft_del').default(false).notNull(),
   },
   (table) => [
     check('quantity_check', sql`${table.quantity} > 0`),
-    check('unit_price_check', sql`${table.unitPrice} >= 0`),
+    check('unit_price_check', sql`${table.priceAtAdd} >= 0`),
   ]
 );
 
