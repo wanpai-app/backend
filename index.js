@@ -4,7 +4,7 @@ const cors = require('cors');
 
 const productRoutes = require('./src/routes/productRoutes');
 const userRoutes = require('./src/routes/userRoutes');
-const ecpayRoutes = require('./src/routes/ecpayRoutes');
+// const ecpayRoutes = require('./src/routes/ecpayRoutes');
 const orderRoutes = require('./src/routes/orderRoutes');
 const notificationRoutes = require('./src/routes/notificationRoutes');
 const cartRoutes = require('./src/routes/cartRoutes');
@@ -16,7 +16,7 @@ app.use(cors());
 app.use('/api', productRoutes);
 
 //綠界使用的
-app.use('/api', ecpayRoutes);
+// app.use('/api', ecpayRoutes);
 
 app.use('/api/users', userRoutes);
 app.use('/api', orderRoutes);
