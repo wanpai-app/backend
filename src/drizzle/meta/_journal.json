@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1749146289029,
+      "tag": "0000_cooing_maggott",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1749110795995,
+      "tag": "0004_remarkable_lightspeed",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1749195426130,
+      "tag": "0005_parched_mephisto",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1750140195807,
+      "tag": "0006_wide_meggan",
+      "breakpoints": true
+    }
+  ]
+}

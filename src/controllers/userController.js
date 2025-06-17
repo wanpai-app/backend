@@ -83,7 +83,12 @@ const getProfile = async (req, res) => {
   const userId = req.user.id;
   try {
     const result = await db
-      .select({ username: usersTable.username, email: usersTable.email })
+      .select({
+        username: usersTable.username,
+        email: usersTable.email,
+        phone: usersTable.phone,
+        address: usersTable.address,
+      })
       .from(usersTable)
       .where(eq(usersTable.id, userId))
       .limit(1);
@@ -96,7 +101,7 @@ const getProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   const userId = req.user.id;
-  const { username, email } = req.body;
+  const { username, email, phone, address } = req.body;
 
   if (!username || !email) {
     return res.status(400).json({ error: '請提供 username 與 email' });
@@ -116,7 +121,10 @@ const updateProfile = async (req, res) => {
       return res.status(409).json({ error: '此 email 已被其他會員使用' });
     }
 
-    await db.update(usersTable).set({ username, email }).where(eq(usersTable.id, userId));
+    await db
+      .update(usersTable)
+      .set({ username, email, phone, address })
+      .where(eq(usersTable.id, userId));
 
     res.json({ message: '更新成功' });
   } catch (err) {
