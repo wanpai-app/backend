@@ -10,6 +10,7 @@ function isValidEmail(email) {
 
 const register = async (req, res) => {
   console.log('收到註冊請求');
+  console.log('req.body:', req.body);
 
   const { username, email, password } = req.body;
 
@@ -39,7 +40,7 @@ const register = async (req, res) => {
     res.status(201).json({ message: '註冊成功' });
   } catch (err) {
     console.error('❌ 註冊失敗:', err);
-    res.status(500).json({ error: '伺服器錯誤' });
+    res.status(500).json({ error: '伺服器錯誤', detail: err.message });
   }
 };
 

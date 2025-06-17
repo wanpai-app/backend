@@ -3,7 +3,6 @@ const { cartItemsTable } = require('../models/cartSchema');
 const { productsTable } = require('../models/productSchema');
 const { eq, and } = require('drizzle-orm');
 
-// 获取用户的购物车
 const getCart = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -30,7 +29,6 @@ const getCart = async (req, res) => {
   }
 };
 
-// 添加商品到购物车
 const addToCart = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -40,7 +38,6 @@ const addToCart = async (req, res) => {
       return res.status(400).json({ error: '請提供有效的PRODUCT_ID和數量' });
     }
 
-    // 检查商品是否存在
     const product = await db
       .select()
       .from(productsTable)
@@ -51,7 +48,6 @@ const addToCart = async (req, res) => {
       return res.status(404).json({ error: '商品不存在' });
     }
 
-    // 检查是否已在购物车中
     const existingItem = await db
       .select()
       .from(cartItemsTable)
@@ -65,7 +61,6 @@ const addToCart = async (req, res) => {
       .limit(1);
 
     if (existingItem.length > 0) {
-      // 更新數量
       const [updatedItem] = await db
         .update(cartItemsTable)
         .set({
@@ -78,7 +73,6 @@ const addToCart = async (req, res) => {
       return res.json(updatedItem);
     }
 
-    // 新增商品到購物車
     const [newItem] = await db
       .insert(cartItemsTable)
       .values({
@@ -98,7 +92,6 @@ const addToCart = async (req, res) => {
   }
 };
 
-// 更新購物車商品數量
 const updateCartItem = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -135,7 +128,6 @@ const updateCartItem = async (req, res) => {
   }
 };
 
-// 從購物車中刪除商品（軟刪除）
 const removeFromCart = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -167,7 +159,6 @@ const removeFromCart = async (req, res) => {
   }
 };
 
-// 清空購物車（軟刪除所有項目）
 const clearCart = async (req, res) => {
   try {
     const userId = req.user.id;
