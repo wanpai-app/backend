@@ -1,7 +1,7 @@
-require('express');
 const db = require('../configs/db');
 const { ordersTable } = require('../models/orderSchema');
 const { eq } = require('drizzle-orm');
+const { findOrders } = require('../services/orderService');
 
 const createOrder = async (req, res) => {
   try {
@@ -32,6 +32,13 @@ const getOrderById = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+  try {
+    const filters = req.query;
+    const ordersList = await findOrders({ filters });
+    res.json(ordersList);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 const updateOrder = async (req, res) => {
@@ -47,7 +54,7 @@ const updateOrder = async (req, res) => {
       })
       .where(eq(ordersTable.id, id))
       .returning();
-    res.status(201).json(insertedOrder);
+    res.status(200).json(insertedOrder);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -69,4 +76,32 @@ const softDeleteOrder = async (req, res) => {
   }
 };
 
-module.exports = { createOrder, getOrderById, updateOrder, softDeleteOrder };
+const getAllOrders = async (req, res) => {
+  try {
+    const filters = req.query;
+    const orders = await findOrders({ filters });
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const getUserOrders = async (req, res) => {
+  const userId = req.user.id;
+  try {
+    const orders = await findOrders({ userId });
+    res.json(orders);
+  } catch (error) {
+    console.error('取得訂單錯誤：', error);
+    res.status(500).json({ error: '無法取得訂單' });
+  }
+};
+
+module.exports = {
+  createOrder,
+  getOrderById,
+  updateOrder,
+  softDeleteOrder,
+  getAllOrders,
+  getUserOrders,
+};
