@@ -20,7 +20,7 @@ const authenticateToken = async (req, res, next) => {
 
     req.user = user[0];
     next();
-  } catch (err) {
+  } catch {
     return res.status(403).json({ error: 'Token 驗證失敗' });
   }
 };
