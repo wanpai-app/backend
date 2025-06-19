@@ -1,4 +1,4 @@
-const { db } = require('../drizzle');
+const db = require('../configs/db');
 const { ordersTable } = require('../models/orderSchema');
 const { eq, and, gte, lte } = require('drizzle-orm');
 

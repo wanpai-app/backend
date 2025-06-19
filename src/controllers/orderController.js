@@ -2,6 +2,7 @@ const db = require('../configs/db');
 const { ordersTable } = require('../models/orderSchema');
 const { eq } = require('drizzle-orm');
 const { findOrders } = require('../services/orderService');
+const { getOrderWithItems } = require('../services/orderService');
 
 const createOrder = async (req, res) => {
   try {
@@ -21,11 +22,18 @@ const createOrder = async (req, res) => {
 
 const getOrderById = async (req, res) => {
   const id = Number(req.params.id);
+  const userId = req.user?.id;
+  const isAdmin = req.user?.role === 'admin';
+
   try {
-    const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, id));
+    const order = await getOrderWithItems(id);
 
     if (!order) {
       return res.status(404).json({ message: '找不到該訂單' });
+    }
+
+    if (!isAdmin && order.userId !== userId) {
+      return res.status(403).json({ error: '無權查看此訂單' });
     }
 
     res.json(order);
@@ -87,12 +95,19 @@ const getAllOrders = async (req, res) => {
 };
 
 const getUserOrders = async (req, res) => {
+  if (!req.user || !req.user.id) {
+    console.error(' 沒有抓到 req.user 或 user.id！現在是：', req.user);
+    return res.status(401).json({ error: '尚未登入或 token 無效' });
+  }
+
   const userId = req.user.id;
+
   try {
     const orders = await findOrders({ userId });
+    console.log(' 撈到的訂單:', orders);
     res.json(orders);
   } catch (error) {
-    console.error('取得訂單錯誤：', error);
+    console.error(' 取得訂單失敗:', error);
     res.status(500).json({ error: '無法取得訂單' });
   }
 };
