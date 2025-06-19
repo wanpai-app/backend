@@ -5,7 +5,6 @@ const db = require('../configs/db');
 const { favoritesTable } = require('../models/favoriteSchema');
 const authenticateToken = require('../middleware/auth');
 
-
 router.post('/', authenticateToken, async (req, res) => {
   const userId = req.user.id;
   const { productId } = req.body;
@@ -18,7 +17,6 @@ router.post('/', authenticateToken, async (req, res) => {
     res.status(500).json({ error: '收藏失敗，可能已存在' });
   }
 });
-
 
 router.delete('/:productId', authenticateToken, async (req, res) => {
   const userId = req.user.id;
@@ -34,7 +32,6 @@ router.delete('/:productId', authenticateToken, async (req, res) => {
     res.status(500).json({ error: '取消收藏失敗' });
   }
 });
-
 
 router.get('/', authenticateToken, async (req, res) => {
   const userId = req.user.id;
