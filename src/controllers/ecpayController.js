@@ -3,8 +3,17 @@ const ecpayConfig = require('../configs/ecpayConfig');
 const ecpay_payment = require('ecpay_aio_nodejs');
 const db = require('../configs/db');
 const { ecpayOrdersTable } = require('../models/ecpaySchema');
+const { ordersTable } = require('../models/orderSchema');
 const { eq } = require('drizzle-orm');
-const { nanoid } = require('nanoid');
+const { customAlphabet } = require('nanoid');
+const nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 6);
+
+const generateOrderId = () => {
+  const now = new Date();
+  const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+  return `WP${dateStr}${nanoid()}`;
+};
+
 const options = {
   OperationMode: 'Test',
   MercProfile: {
@@ -16,9 +25,10 @@ const options = {
   IsProjectContractor: false,
 };
 const create = new ecpay_payment(options);
+
 exports.createOrder = async (req, res) => {
   const { TotalAmount, TradeDesc, ItemName } = req.body;
-  const MerchantTradeNo = Date.now().toString() + nanoid(6);
+  const MerchantTradeNo = generateOrderId();
   const MerchantTradeDate = new Date()
     .toLocaleString('zh-TW', {
       year: 'numeric',
@@ -69,8 +79,16 @@ exports.createOrder = async (req, res) => {
 
 exports.handleReturn = async (req, res) => {
   console.log('綠界回傳資料 (POST):', req.body);
-  const { CheckMacValue, MerchantTradeNo, RtnCode, RtnMsg, PaymentDate, SimulatePaid, TradeNo } =
-    req.body;
+  const {
+    CheckMacValue,
+    MerchantTradeNo,
+    RtnCode,
+    RtnMsg,
+    PaymentDate,
+    SimulatePaid,
+    TradeNo,
+    totalAmount,
+  } = req.body;
   const data = { ...req.body };
   delete data.CheckMacValue;
 
@@ -107,6 +125,18 @@ exports.handleReturn = async (req, res) => {
         .where(eq(ecpayOrdersTable.merchantTradeNo, MerchantTradeNo));
 
       console.log(`資料庫訂單 ${MerchantTradeNo} 狀態已更新為 ${newTradeStatus}`);
+
+      const [updatedOrder] = await db
+        .update(ordersTable)
+        .set({
+          status: 'paid',
+          totalPrice: Number(totalAmount),
+          updatedAt: new Date(),
+        })
+        .where(eq(ordersTable.orderNumber, MerchantTradeNo))
+        .returning();
+      console.log('訂單已成功更新：', updatedOrder);
+
       res.send('1|OK'); // 告知綠界已成功接收
     } catch (error) {
       console.error('更新訂單狀態時發生錯誤:', error);
