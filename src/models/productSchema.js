@@ -16,7 +16,7 @@ const statusEnum = pgEnum('status', ['draft', 'active', 'archived']);
 const productsTable = pgTable(
   'products',
   {
-    id: serial('id').primaryKey().notNull(),
+    id: serial('id').primaryKey(),
     refId: varchar('ref_id', { length: 20 }).unique(),
     name: varchar('name', { length: 225 }).notNull(),
     sku: varchar('sku', { length: 255 }).notNull().unique(),

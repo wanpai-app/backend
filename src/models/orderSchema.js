@@ -20,7 +20,7 @@ const orderStatusEnum = pgEnum('order_status', [
 ]);
 
 const ordersTable = pgTable('orders', {
-  id: serial('id').primaryKey().notNull(),
+  id: serial('id').primaryKey(),
   orderNumber: varchar('order_number', { length: 255 }).notNull(),
   userId: integer('user_id').references(() => usersTable.id),
   recipientName: varchar('recipient_name', { length: 100 }).notNull(),
