@@ -1,87 +1,86 @@
-const db = require('../configs/db');
-const { uploadImage, deleteImage } = require('../utils/s3Util');
+const { db } = require('../configs/db');
+const { createProductImage, deleteProductImage } = require('../services/productImageService');
+const { productsTable } = require('../models/productSchema');
 const { productImagesTable } = require('../models/productImageSchema');
-const { eq, sql } = require('drizzle-orm');
+const { eq, asc } = require('drizzle-orm');
 
-const createProductImage = async (tx, product, file) => {
+const uploadProductImage = async (req, res) => {
+  const productId = Number(req.params.productId);
+  if (!productId || isNaN(productId)) {
+    return res.status(400).json({ error: '無效的商品 ID' });
+  }
+
+  const file = req.file;
+  const isCover = req.body.isCover === 'true';
+
+  if (!file) return res.status(400).json({ error: '缺少圖片檔案' });
+
   try {
-  const s3Result = await uploadImage(file);
-  await tx.insert(productImagesTable).values({
-    productId: product.id,
-    refId: product.refId,
-    imgUrl: s3Result.Location,
-    orderIndex: 0,
-    isCover: true,
-    createdAt: sql`now()`,
-    updatedAt: sql`now()`,
-  });
+    const [product] = await db.select().from(productsTable).where(eq(productsTable.id, productId));
+
+    if (!product) return res.status(404).json({ error: '找不到商品' });
+    if (product.isDeleted) {
+      return res.status(400).json({ error: '商品已被刪除，無法上傳圖片' });
+    }
+
+    await db.transaction(async (tx) => {
+      await createProductImage(tx, product, file, isCover);
+    });
+
+    res.status(201).json({ message: '圖片上傳成功' });
   } catch (err) {
-    console.error("❌ Failed to create product image:", err);
-    throw err; // 丟回上層讓交易回滾
+    console.error('圖片上傳失敗:', err);
+    res.status(500).json({ error: '圖片上傳失敗' });
   }
 };
 
-const updateProductImage = async (tx, productId, refId, file) => {
-  const [existingCover] = await tx
-    .select()
-    .from(productImagesTable)
-    .where(eq(productImagesTable.productId, productId))
-    .where(eq(productImagesTable.isCover, true))
-    .limit(1);
-
-  if (existingCover) {
-    try {
-      await deleteImage(existingCover.imgUrl);
-      await tx.delete(productImagesTable).where(eq(productImagesTable.id, existingCover.id));
-    } catch (err) {
-      console.warn('刪除舊封面失敗:', err.message);
-    }
-  }
-
-  const s3Result = await uploadImage(file);
-  await tx.insert(productImagesTable).values({
-    productId,
-    refId,
-    imgUrl: s3Result.Location,
-    orderIndex: 0,
-    isCover: true,
-    createdAt: sql`now()`,
-    updatedAt: sql`now()`,
-  });
-};
-
-const deleteProductImages = async (tx, productId) => {
-  const images = await tx
-    .select()
-    .from(productImagesTable)
-    .where(eq(productImagesTable.productId, productId));
-
-  await tx.delete(productImagesTable).where(eq(productImagesTable.productId, productId));
-
-  for (const img of images) {
-    try {
-      await deleteImage(img.imgUrl);
-    } catch (err) {
-      console.error('刪除S3圖片失敗:', img.imgUrl, err);
-    }
-  }
-};
-
-const deleteProductImage = async (req, res) => {
+const removeProductImage = async (req, res) => {
   const id = Number(req.params.id);
+  if (!id || isNaN(id)) {
+    return res.status(400).json({ error: '無效的圖片 ID' });
+  }
 
-  const [img] = await db.select().from(productImagesTable).where(eq(productImagesTable.id, id));
-  if (!img) return res.status(404).json({ error: '找不到圖片' });
+  try {
+    await db.transaction(async (tx) => {
+      const deleted = await deleteProductImage(tx, id);
+      if (!deleted) return res.status(404).json({ error: '找不到圖片' });
+    });
 
-  await deleteImage(img.imgUrl); // 刪 S3
-  await db.delete(productImagesTable).where(eq(productImagesTable.id, id)); // 刪 DB
+    res.json({ message: '圖片已刪除' });
+  } catch (err) {
+    console.error('刪除圖片失敗:', err);
+    res.status(500).json({ error: '刪除圖片失敗' });
+  }
+};
 
-  res.json({ message: '圖片已刪除' });
+const getProductImagesByProductId = async (req, res) => {
+  const productId = Number(req.params.productId);
+  if (!productId || isNaN(productId)) {
+    return res.status(400).json({ error: '無效的商品 ID' });
+  }
+
+  try {
+    const [product] = await db.select().from(productsTable).where(eq(productsTable.id, productId));
+
+    if (!product) {
+      return res.status(404).json({ error: '找不到商品' });
+    }
+
+    const images = await db
+      .select()
+      .from(productImagesTable)
+      .where(eq(productImagesTable.productId, productId))
+      .orderBy(asc(productImagesTable.orderIndex));
+
+    res.json(images);
+  } catch (err) {
+    console.error('取得圖片清單失敗:', err);
+    res.status(500).json({ error: '伺服器錯誤' });
+  }
 };
 
 module.exports = {
-  createProductImage,
-  updateProductImage,
-  deleteProductImages,
-  deleteProductImage,
+  uploadProductImage,
+  removeProductImage,
+  getProductImagesByProductId,
 };

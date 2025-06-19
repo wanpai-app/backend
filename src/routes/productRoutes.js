@@ -1,49 +1,70 @@
 const express = require('express');
 const router = express.Router();
+
 const {
   getAllProducts,
   getProductById,
   createProduct,
   updateProduct,
-  deleteProduct,
+  deleteProductById,
 } = require('../controllers/productController');
-const { deleteProductImage } = require('../controllers/productImageController');
-// const { upload, uploadImages } = require('../middlewares/s3Upload');
 
+const {
+  uploadProductImage,
+  removeProductImage,
+  getProductImagesByProductId,
+} = require('../controllers/productImageController');
+
+const { uploadProductImages } = require('../middleware/s3UploadMiddleware');
 const authenticateToken = require('../middleware/auth');
 const isAdmin = require('../middleware/isAdmin');
 const validate = require('../middleware/validate');
-const { productSchema } = require('../validators/productValidator');
 
-router.get('/admin/products', isAdmin, getAllProducts);
-router.get('/admin/products/:id', isAdmin, getProductById);
+const { productSchema } = require('../validators/productValidator');
+const { validateHasCoverImage } = require('../validators/hasCoverImageValidator');
+
+// ========= 商品管理（後台） =========
+router.get('/admin/products', authenticateToken, isAdmin, getAllProducts);
+router.get('/admin/products/:id', authenticateToken, isAdmin, getProductById);
+
 router.post(
   '/admin/products',
   authenticateToken,
   isAdmin,
-  // uploadImages,
+  uploadProductImages,
+  validateHasCoverImage,
   validate(productSchema),
   createProduct
 );
+
 router.put(
   '/admin/products/:id',
   authenticateToken,
   isAdmin,
+  uploadProductImages,
+  validateHasCoverImage,
   validate(productSchema),
   updateProduct
 );
-router.delete(
-  '/admin/products/:id',
+
+router.delete('/admin/products/:id', authenticateToken, isAdmin, deleteProductById);
+
+// ========= 商品圖片管理 =========
+router.get('/admin/products/:id/images', authenticateToken, isAdmin, getProductImagesByProductId);
+
+router.post(
+  '/admin/products/:id/images',
   authenticateToken,
   isAdmin,
-  deleteProduct
+  uploadProductImages,
+  uploadProductImage
 );
 
 router.delete(
-  '/admin/productimage/:id',
+  '/admin/products/:id/images/:imageId',
   authenticateToken,
   isAdmin,
-  deleteProductImage
+  removeProductImage
 );
 
 router.get('/products', getAllProducts);

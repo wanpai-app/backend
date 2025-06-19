@@ -16,5 +16,8 @@ const upload = multer({
 
 module.exports = {
   upload,
-  uploadImages: upload.array('images', 3),
+  uploadProductImages: upload.fields([
+    { name: 'cover', maxCount: 1 },
+    { name: 'previews', maxCount: 3 },
+  ]),
 };

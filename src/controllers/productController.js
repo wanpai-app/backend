@@ -11,24 +11,26 @@ const {
   updateProductImage,
   deleteProductImages,
 } = require('./productImageController');
+const { deleteProductImages } = require('../services/productImageService');
+const { uploadProductImage } = require('../controllers/productImageController');
 
 const getAllProducts = async (req, res) => {
-  const status = req.query.status;
-  const conditions = [eq(productsTable.isDeleted, false)];
-
-  if (!isAdmin) {
-    conditions.push(eq(productsTable.status, 'active'));
-  } else if (status && status !== 'all') {
-    conditions.push(eq(productsTable.status, status));
-  }
-
-  let query = db
-    .select()
-    .from(productsTable)
-    .where(and(...conditions))
-    .orderBy(productsTable.id);
+  const isAdmin = req.user?.role === 'admin';
 
   try {
+    const status = req.query.status;
+    let query = db.select().from(productsTable).orderBy(productsTable.id);
+
+    if (!isAdmin) {
+      query = query.where(
+        and(eq(productsTable.isDeleted, false), eq(productsTable.status, 'active'))
+      );
+    } else if (status && status !== 'all') {
+      query = query.where(
+        and(eq(productsTable.isDeleted, false), eq(productsTable.status, status))
+      );
+    }
+
     const products = await query;
     if (products.length === 0) return res.json([]);
 
@@ -41,40 +43,12 @@ const getAllProducts = async (req, res) => {
       })
       .from(productImagesTable)
       .where(
-        and(
-          inArray(productImagesTable.productId, productIds),
-          eq(productImagesTable.isCover, true)
-        )
+        and(inArray(productImagesTable.productId, productIds), eq(productImagesTable.isCover, true))
       );
 
     const coverMap = new Map();
     for (const img of coverImages) {
       coverMap.set(img.productId, img.imgUrl);
-    }
-
-    const missingCoverIds = productIds.filter((id) => !coverMap.has(id));
-
-    if (missingCoverIds.length > 0) {
-      const fallbackImages = await db
-        .select({
-          productId: productImagesTable.productId,
-          imgUrl: productImagesTable.imgUrl,
-          orderIndex: productImagesTable.orderIndex,
-        })
-        .from(productImagesTable)
-        .where(inArray(productImagesTable.productId, missingCoverIds))
-        .orderBy(asc(productImagesTable.productId), asc(productImagesTable.orderIndex));
-
-      const fallbackMap = new Map();
-      for (const img of fallbackImages) {
-        if (!fallbackMap.has(img.productId)) {
-          fallbackMap.set(img.productId, img.imgUrl);
-        }
-      }
-
-      for (const [pid, url] of fallbackMap) {
-        coverMap.set(pid, url);
-      }
     }
 
     const productsWithCovers = products.map((p) => ({
@@ -84,7 +58,6 @@ const getAllProducts = async (req, res) => {
 
     res.json(productsWithCovers);
   } catch (err) {
-    console.error('getAllProducts 錯誤:', err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -110,6 +83,7 @@ const getProductById = async (req, res) => {
 
   try {
     const rows = await db.select().from(productsTable).where(eq(productsTable.id, id));
+
     if (rows.length === 0) return res.status(404).json({ error: '查無此商品' });
 
     const product = rows[0];
@@ -120,9 +94,6 @@ const getProductById = async (req, res) => {
       .where(eq(productImagesTable.productId, id))
       .orderBy(asc(productImagesTable.orderIndex));
 
-    const coverImage =
-      images.find((img) => img.isCover) || images.find((img) => img.orderIndex === 0) || images[0];
-    const previewImages = images.filter((img) => img.id !== coverImage?.id).slice(0, 2);
     let isFavorited = false;
 
     if (userId) {
@@ -133,6 +104,12 @@ const getProductById = async (req, res) => {
 
       isFavorited = favorite.length > 0;
     }
+    const coverImage = images.find((img) => img.isCover) || null;
+
+    const previewImages = images
+      .filter((img) => !img.isCover)
+      .sort((a, b) => a.orderIndex - b.orderIndex)
+      .slice(0, 2);
 
     res.json({
       ...product,
@@ -149,25 +126,33 @@ const getProductById = async (req, res) => {
 };
 
 const createProduct = async (req, res) => {
+  const coverFile = req.files?.cover?.[0];
+  const previewFiles = req.files?.previews || [];
+
   try {
     await db.transaction(async (tx) => {
-      const [insertedProduct] = await tx
+      const [inserted] = await tx
         .insert(productsTable)
         .values({
           ...req.body,
-          price: Number(req.body.price),
           createdAt: sql`now()`,
           updatedAt: sql`now()`,
         })
         .returning();
 
-      if (req.file) await createProductImage(tx, insertedProduct, req.file);
+      if (coverFile) {
+        await uploadProductImage(tx, inserted, coverFile, true);
+      }
 
-      res.status(201).json(insertedProduct);
+      for (const file of previewFiles) {
+        await uploadProductImage(tx, inserted, file, false);
+      }
+
+      res.status(201).json(inserted);
     });
   } catch (err) {
-    console.error('建立商品失敗', err);
-    res.status(500).json({ error: '建立商品失敗', message: err.message });
+    console.error('商品建立失敗:', err);
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -175,51 +160,57 @@ const updateProduct = async (req, res) => {
   const id = Number(req.params.id);
   if (isNaN(id)) return res.status(400).json({ error: '無效的ID' });
 
+  const coverFile = req.files?.cover?.[0];
+  const previewFiles = req.files?.previews || [];
+
   try {
     await db.transaction(async (tx) => {
       const [updated] = await tx
         .update(productsTable)
         .set({
           ...req.body,
-          price: req.body.price ? Number(req.body.price) : undefined,
           updatedAt: sql`now()`,
         })
         .where(eq(productsTable.id, id))
         .returning();
 
-      if (!updated) throw new Error('找不到要更新的商品');
+      if (!updated) throw new Error('找不到商品');
 
-      if (req.file) await updateProductImage(tx, id, updated.refId, req.file);
+      if (coverFile) {
+        await uploadProductImage(tx, updated, coverFile, true);
+      }
+
+      for (const file of previewFiles) {
+        await uploadProductImage(tx, updated, file, false);
+      }
 
       res.status(200).json(updated);
     });
   } catch (err) {
-    console.error('更新商品失敗', err);
-    res.status(500).json({ error: '更新商品失敗', message: err.message });
+    console.error('商品更新失敗:', err);
+    res.status(500).json({ error: err.message });
   }
 };
 
-const deleteProduct = async (req, res) => {
+const deleteProductById = async (req, res) => {
   const id = Number(req.params.id);
-  if (isNaN(id)) return res.status(400).json({ error: '無效的ID' });
+  if (isNaN(id)) return res.status(400).json({ error: '無效的商品 ID' });
 
   try {
     await db.transaction(async (tx) => {
-      const product = await tx.select().from(productsTable).where(eq(productsTable.id, id)).limit(1);
-      if (product.length === 0) throw new Error('查無此商品');
-
-      await tx
-        .update(productsTable)
-        .set({ isDeleted: true, updatedAt: new Date() })
-        .where(eq(productsTable.id, id));
-
       await deleteProductImages(tx, id);
 
-      res.json({ message: '商品已刪除' });
+      const deleted = await tx.delete(productsTable).where(eq(productsTable.id, id));
+
+      if (deleted.rowCount === 0) {
+        throw new Error('找不到商品');
+      }
     });
+
+    res.json({ message: '商品與相關圖片已刪除' });
   } catch (err) {
-    console.error('刪除商品失敗', err);
-    res.status(500).json({ error: '刪除商品失敗', message: err.message });
+    console.error('刪除商品失敗:', err);
+    res.status(500).json({ error: '刪除商品失敗：' + err.message });
   }
 };
 
@@ -228,5 +219,5 @@ module.exports = {
   getProductById,
   createProduct,
   updateProduct,
-  deleteProduct,
+  deleteProductById,
 };
