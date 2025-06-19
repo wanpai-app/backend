@@ -24,5 +24,4 @@ const authenticateToken = async (req, res, next) => {
     return res.status(403).json({ error: 'Token 驗證失敗' });
   }
 };
-
 module.exports = authenticateToken;
