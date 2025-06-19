@@ -10,7 +10,7 @@ const stockReasonEnum = pgEnum('stock_reason', [
 ]);
 
 const stockLogsTable = pgTable('stock_logs', {
-  id: serial('id').primaryKey().notNull(),
+  id: serial('id').primaryKey(),
   productId: integer('product_id')
     .notNull()
     .references(() => productsTable.id),
