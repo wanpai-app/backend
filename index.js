@@ -8,7 +8,10 @@ const ecpayRoutes = require('./src/routes/ecpayRoutes');
 const orderRoutes = require('./src/routes/orderRoutes');
 const notificationRoutes = require('./src/routes/notificationRoutes');
 const cartRoutes = require('./src/routes/cartRoutes');
+
 const tagsRoutes = require('./src/routes/tagsRoutes');
+
+const favoriteRoutes = require('./src/routes/favoriteRoutes');
 
 const app = express();
 
@@ -22,6 +25,7 @@ app.use('/api', orderRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api', tagsRoutes);
+app.use('/api/favorites', favoriteRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
