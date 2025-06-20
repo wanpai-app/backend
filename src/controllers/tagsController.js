@@ -1,13 +1,13 @@
-const { eq, inArray, sql, and } = require('drizzle-orm');
+const { eq, inArray, sql, and, asc } = require('drizzle-orm');
 const { tagsTable, typeEnum } = require('../models/tagsSchema');
 const { productsTable, statusEnum } = require('../models/productSchema');
 const { productTagSTable } = require('../models/productTagSchema');
+const { productImagesTable } = require('../models/productImageSchema');
 const db = require('../configs/db');
 
 const tagsController = {
   getAllFilterTags: async (req, res) => {
     try {
-      // 獲取所有 'brand' 類型的標籤 (tagname 和 id)
       const brands = await db
         .select({
           id: tagsTable.id,
@@ -43,69 +43,60 @@ const tagsController = {
     const { tagname } = req.query;
 
     try {
-      let selectedTagNames = [];
-      let selectedTagIds = [];
-
-      if (tagname) {
-        selectedTagNames = tagname.split(',');
-
-        const tags = await db
-          .select({
-            id: tagsTable.id,
-            tagname: tagsTable.tagname,
-          })
-          .from(tagsTable)
-          .where(inArray(tagsTable.tagname, selectedTagNames))
-          .execute();
-
-        selectedTagIds = tags.map((tag) => tag.id);
-
-        if (selectedTagIds.length !== selectedTagNames.length) {
-          console.warn('Some provided tagnames did not match any existing tags.');
-        }
+      if (!tagname) {
+        return res.json({ products: [] });
       }
 
-      if (selectedTagIds.length === 0) {
-        const allActiveProducts = await db
-          .select()
-          .from(productsTable)
-          .where(eq(productsTable.status, statusEnum.enumValues[1]))
-          .execute();
-        return res.status(200).json({ products: allActiveProducts });
+      // Step 1: Find tag ID from tagname
+      const tags = await db
+        .select({ id: tagsTable.id })
+        .from(tagsTable)
+        .where(eq(tagsTable.tagname, tagname));
+      if (tags.length === 0) {
+        return res.json({ products: [] });
       }
+      const tagId = tags[0].id;
 
-      const productsWithMatchingTags = await db
-        .select({
-          productId: productTagSTable.productId,
-        })
+      // Step 2: Get product IDs for that tag
+      const productTagLinks = await db
+        .select({ productId: productTagSTable.productId })
         .from(productTagSTable)
-        .where(inArray(productTagSTable.tagId, selectedTagIds))
-        .groupBy(productTagSTable.productId)
-        .having((fields) => eq(sql`count(${fields.productId})`, selectedTagIds.length)) // 確保每個分組的 productId 數量等於選定標籤的總數
-        .execute();
-
-      const productIds = productsWithMatchingTags.map((p) => p.productId);
-
-      // 如果沒有找到任何符合所有標籤的產品
-      if (productIds.length === 0) {
-        return res.status(200).json({ products: [] });
+        .where(eq(productTagSTable.tagId, tagId));
+      if (productTagLinks.length === 0) {
+        return res.json({ products: [] });
       }
+      const productIds = productTagLinks.map((p) => p.productId);
 
-      // 根據篩選出的產品 ID 獲取產品詳細資訊，並且只顯示狀態為 'active' 的商品
+      // Step 3: Fetch 'active' products from the list of IDs
       const products = await db
         .select()
         .from(productsTable)
+        .where(and(inArray(productsTable.id, productIds), eq(productsTable.status, 'active')));
+      if (products.length === 0) {
+        return res.json({ products: [] });
+      }
+
+      // Step 4: Fetch cover images for these active products
+      const activeProductIds = products.map((p) => p.id);
+      const coverImages = await db
+        .select({ productId: productImagesTable.productId, imgUrl: productImagesTable.imgUrl })
+        .from(productImagesTable)
         .where(
           and(
-            inArray(productsTable.id, productIds), // 產品 ID 必須在篩選出的列表中
-            eq(productsTable.status, statusEnum.enumValues[1]) // 產品狀態必須是 'active'
+            inArray(productImagesTable.productId, activeProductIds),
+            eq(productImagesTable.isCover, true)
           )
-        )
-        .execute();
+        );
+      const coverMap = new Map(coverImages.map((img) => [img.productId, img.imgUrl]));
 
-      res.status(200).json({ products });
+      const productsWithCovers = products.map((p) => ({
+        ...p,
+        coverImage: coverMap.get(p.id) || null,
+      }));
+
+      res.json({ products: productsWithCovers });
     } catch (error) {
-      console.error('Error fetching products by tagnames:', error);
+      console.error('[API FATAL ERROR] in getProductsByTagnames:', error);
       res.status(500).json({ message: 'Internal server error' });
     }
   },
