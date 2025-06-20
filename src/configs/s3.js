@@ -12,6 +12,8 @@ const s3 = new S3Client({
     accessKeyId: ACCESS_KEY_ID,
     secretAccessKey: SECRET_ACCESS_KEY,
   },
+  endpoint: 'https://s3.ap-northeast-1.amazonaws.com',
+  forcePathStyle: false,
 });
 
 module.exports = { s3, REGION, BUCKET_NAME };

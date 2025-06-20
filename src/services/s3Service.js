@@ -28,14 +28,13 @@ const uploadImage = async (image) => {
       Key: key,
       Body: image.buffer,
       ContentType: image.mimetype,
-      ACL: 'public-read',
       CacheControl: 'max-age=31536000',
     });
 
     await s3.send(command);
 
     return {
-      key,
+      key: key,
       Location: `${CDN_BASE}/${key}`,
     };
   } catch (err) {

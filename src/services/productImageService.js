@@ -1,4 +1,4 @@
-const { uploadImage, deleteImage } = require('./s3UploadService');
+const { uploadImage, deleteImage } = require('./s3Service');
 const { productImagesTable } = require('../models/productImageSchema');
 const { eq, sql } = require('drizzle-orm');
 
@@ -38,6 +38,8 @@ const deleteProductImages = async (tx, productId) => {
     .from(productImagesTable)
     .where(eq(productImagesTable.productId, productId));
 
+  if (images.length === 0) return false;
+
   await tx.delete(productImagesTable).where(eq(productImagesTable.productId, productId));
 
   for (const img of images) {
@@ -47,6 +49,7 @@ const deleteProductImages = async (tx, productId) => {
       console.error('刪除S3圖片失敗:', img.imgUrl, err);
     }
   }
+  return true;
 };
 
 const deleteProductImage = async (tx, imageId) => {
@@ -56,7 +59,12 @@ const deleteProductImage = async (tx, imageId) => {
     .where(eq(productImagesTable.id, imageId));
   if (!img) return null;
 
-  await deleteImage(img.imgUrl);
+  try {
+    await deleteImage(img.imgUrl);
+  } catch (err) {
+    console.error('刪除S3圖片失敗:', img.imgUrl, err);
+  }
+
   await tx.delete(productImagesTable).where(eq(productImagesTable.id, imageId));
   return img;
 };
