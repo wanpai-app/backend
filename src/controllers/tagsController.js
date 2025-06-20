@@ -1,6 +1,6 @@
-const { eq, inArray, sql, and, asc } = require('drizzle-orm');
+const { eq, inArray, and } = require('drizzle-orm');
 const { tagsTable, typeEnum } = require('../models/tagsSchema');
-const { productsTable, statusEnum } = require('../models/productSchema');
+const { productsTable } = require('../models/productSchema');
 const { productTagSTable } = require('../models/productTagSchema');
 const { productImagesTable } = require('../models/productImageSchema');
 const db = require('../configs/db');
@@ -47,7 +47,6 @@ const tagsController = {
         return res.json({ products: [] });
       }
 
-      // Step 1: Find tag ID from tagname
       const tags = await db
         .select({ id: tagsTable.id })
         .from(tagsTable)
@@ -57,7 +56,6 @@ const tagsController = {
       }
       const tagId = tags[0].id;
 
-      // Step 2: Get product IDs for that tag
       const productTagLinks = await db
         .select({ productId: productTagSTable.productId })
         .from(productTagSTable)
@@ -67,7 +65,6 @@ const tagsController = {
       }
       const productIds = productTagLinks.map((p) => p.productId);
 
-      // Step 3: Fetch 'active' products from the list of IDs
       const products = await db
         .select()
         .from(productsTable)
@@ -76,7 +73,6 @@ const tagsController = {
         return res.json({ products: [] });
       }
 
-      // Step 4: Fetch cover images for these active products
       const activeProductIds = products.map((p) => p.id);
       const coverImages = await db
         .select({ productId: productImagesTable.productId, imgUrl: productImagesTable.imgUrl })
