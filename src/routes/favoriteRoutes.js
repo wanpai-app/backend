@@ -2,8 +2,11 @@ const express = require('express');
 const router = express.Router();
 const { eq, and } = require('drizzle-orm');
 const db = require('../configs/db');
-const { favoritesTable } = require('../models/favoriteSchema');
 const authenticateToken = require('../middleware/auth');
+
+const { favoritesTable } = require('../models/favoriteSchema');
+const { productsTable } = require('../models/productSchema');
+const { productImagesTable } = require('../models/productImageSchema');
 
 router.post('/', authenticateToken, async (req, res) => {
   const userId = req.user.id;
@@ -38,13 +41,28 @@ router.get('/', authenticateToken, async (req, res) => {
 
   try {
     const favorites = await db
-      .select()
+      .select({
+        productId: favoritesTable.productId,
+        productName: productsTable.name,
+        thumbnail: productImagesTable.imgUrl,
+        price: productsTable.price,
+        refId: productsTable.refId,
+      })
       .from(favoritesTable)
+      .leftJoin(productsTable, eq(favoritesTable.productId, productsTable.id))
+      .leftJoin(
+        productImagesTable,
+        and(
+          eq(productImagesTable.productId, productsTable.id),
+          eq(productImagesTable.isCover, true)
+        )
+      )
       .where(eq(favoritesTable.userId, userId));
+
     res.json(favorites);
   } catch (err) {
-    console.error('取得收藏失敗：', err);
-    res.status(500).json({ error: '無法取得收藏清單' });
+    console.error('取得收藏清單失敗：', err);
+    res.status(500).json({ error: '伺服器錯誤，無法取得收藏清單' });
   }
 });
 
