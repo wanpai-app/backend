@@ -23,7 +23,6 @@ const validate = require('../middleware/validate');
 const { productSchema } = require('../validators/productValidator');
 const { validateHasCoverImage } = require('../validators/hasCoverImageValidator');
 
-// ========= 商品管理（後台） =========
 router.get('/admin/products', authenticateToken, isAdmin, getAllProducts);
 router.get('/admin/products/:id', authenticateToken, isAdmin, getProductById);
 
@@ -49,7 +48,6 @@ router.put(
 
 router.delete('/admin/products/:id', authenticateToken, isAdmin, deleteProductById);
 
-// ========= 商品圖片管理 =========
 router.get('/admin/products/:id/images', authenticateToken, isAdmin, getProductImagesByProductId);
 
 router.post(

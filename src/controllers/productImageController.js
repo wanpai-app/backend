@@ -1,19 +1,21 @@
-const { db } = require('../configs/db');
+const db = require('../configs/db');
 const { createProductImage, deleteProductImage } = require('../services/productImageService');
 const { productsTable } = require('../models/productSchema');
 const { productImagesTable } = require('../models/productImageSchema');
 const { eq, asc } = require('drizzle-orm');
 
 const uploadProductImage = async (req, res) => {
-  const productId = Number(req.params.productId);
+  const productId = Number(req.params.id);
   if (!productId || isNaN(productId)) {
     return res.status(400).json({ error: '無效的商品 ID' });
   }
 
-  const file = req.file;
-  const isCover = req.body.isCover === 'true';
+  const coverFile = req.files?.cover?.[0] || null;
+  const previewFiles = req.files?.previews || [];
 
-  if (!file) return res.status(400).json({ error: '缺少圖片檔案' });
+  if (!coverFile && previewFiles.length === 0) {
+    return res.status(400).json({ error: '缺少圖片檔案' });
+  }
 
   try {
     const [product] = await db.select().from(productsTable).where(eq(productsTable.id, productId));
@@ -24,7 +26,13 @@ const uploadProductImage = async (req, res) => {
     }
 
     await db.transaction(async (tx) => {
-      await createProductImage(tx, product, file, isCover);
+      if (coverFile) {
+        await createProductImage(tx, product, coverFile, true);
+      }
+
+      for (const file of previewFiles) {
+        await createProductImage(tx, product, file, false);
+      }
     });
 
     res.status(201).json({ message: '圖片上傳成功' });
@@ -35,16 +43,23 @@ const uploadProductImage = async (req, res) => {
 };
 
 const removeProductImage = async (req, res) => {
-  const id = Number(req.params.id);
+  const id = Number(req.params.imageId);
   if (!id || isNaN(id)) {
     return res.status(400).json({ error: '無效的圖片 ID' });
   }
 
   try {
-    await db.transaction(async (tx) => {
-      const deleted = await deleteProductImage(tx, id);
-      if (!deleted) return res.status(404).json({ error: '找不到圖片' });
+    console.log('[DEBUG] 要刪除的圖片 ID:', id);
+
+    const deleted = await db.transaction(async (tx) => {
+      const result = await deleteProductImage(tx, id);
+      console.log('[DEBUG] 刪除結果:', result);
+      return result;
     });
+
+    if (!deleted) {
+      return res.status(404).json({ error: '找不到圖片' });
+    }
 
     res.json({ message: '圖片已刪除' });
   } catch (err) {
@@ -54,7 +69,7 @@ const removeProductImage = async (req, res) => {
 };
 
 const getProductImagesByProductId = async (req, res) => {
-  const productId = Number(req.params.productId);
+  const productId = Number(req.params.id);
   if (!productId || isNaN(productId)) {
     return res.status(400).json({ error: '無效的商品 ID' });
   }
