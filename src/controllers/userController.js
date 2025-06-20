@@ -54,13 +54,14 @@ const login = async (req, res) => {
 
   try {
     const user = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
+
     if (user.length === 0) {
-      return res.status(404).json({ error: 'Email未註冊' });
+      return res.status(401).json({ error: 'Email 或密碼錯誤' });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user[0].password);
     if (!isPasswordValid) {
-      return res.status(401).json({ error: '密碼錯誤' });
+      return res.status(401).json({ error: 'Email 或密碼錯誤' });
     }
 
     const token = jwt.sign(
@@ -74,7 +75,7 @@ const login = async (req, res) => {
     res.status(200).json({ message: '登入成功', token, role: user[0].role });
   } catch (err) {
     console.error('登入失敗', err);
-    res.status(500).json({ error: '伺服器錯誤' });
+    res.status(500).json({ error: '伺服器錯誤，請稍後再試' });
   }
 };
 
@@ -82,7 +83,12 @@ const getProfile = async (req, res) => {
   const userId = req.user.id;
   try {
     const result = await db
-      .select({ id: usersTable.id, email: usersTable.email, role: usersTable.role })
+      .select({
+        username: usersTable.username,
+        email: usersTable.email,
+        phone: usersTable.phone,
+        address: usersTable.address,
+      })
       .from(usersTable)
       .where(eq(usersTable.id, userId))
       .limit(1);
@@ -95,7 +101,7 @@ const getProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   const userId = req.user.id;
-  const { username, email } = req.body;
+  const { username, email, phone, address } = req.body;
 
   if (!username || !email) {
     return res.status(400).json({ error: '請提供 username 與 email' });
@@ -115,7 +121,10 @@ const updateProfile = async (req, res) => {
       return res.status(409).json({ error: '此 email 已被其他會員使用' });
     }
 
-    await db.update(usersTable).set({ username, email }).where(eq(usersTable.id, userId));
+    await db
+      .update(usersTable)
+      .set({ username, email, phone, address })
+      .where(eq(usersTable.id, userId));
 
     res.json({ message: '更新成功' });
   } catch (err) {

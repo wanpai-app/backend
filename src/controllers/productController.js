@@ -2,23 +2,25 @@ const db = require('../configs/db');
 const { productsTable } = require('../models/productSchema');
 const { productImagesTable } = require('../models/productImageSchema');
 const { inArray, eq, and, asc } = require('drizzle-orm');
+const isAdmin = require('../middleware/isAdmin');
 
 const getAllProducts = async (req, res) => {
-  const isAdmin = req.user?.role === 'admin';
+  const status = req.query.status;
+  const conditions = [eq(productsTable.isDeleted, false)];
+
+  if (!isAdmin) {
+    conditions.push(eq(productsTable.status, 'active'));
+  } else if (status && status !== 'all') {
+    conditions.push(eq(productsTable.status, status));
+  }
+
+  let query = db
+    .select()
+    .from(productsTable)
+    .where(and(...conditions))
+    .orderBy(productsTable.id);
+
   try {
-    const status = req.query.status;
-    let query = db.select().from(productsTable).orderBy(productsTable.id);
-
-    if (!isAdmin) {
-      query = query.where(
-        and(eq(productsTable.isDeleted, false), eq(productsTable.status, 'active'))
-      );
-    } else if (status && status !== 'all') {
-      query = query.where(
-        and(eq(productsTable.isDeleted, false), eq(productsTable.status, status))
-      );
-    }
-
     const products = await query;
 
     if (products.length === 0) return res.json([]);

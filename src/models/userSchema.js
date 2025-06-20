@@ -8,6 +8,8 @@ const usersTable = pgTable('users', {
   role: roleEnum('role').default('user'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
+  phone: varchar('phone', { length: 10 }),
+  address: varchar('address', { length: 255 }),
 });
 
 module.exports = { usersTable, roleEnum };

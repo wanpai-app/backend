@@ -11,9 +11,9 @@
 - Node.js + Express
 - PostgreSQL + Drizzle ORM
 - bcryptjs
-- jsonwebtoken (JWT)
-- zod
-- ecpay_aio_nodejs
+- JSON Web Tokens (JWT)
+- Zod
+- ECPayAIO_Node.js（綠界金流）
 - AWS S3
 
 ## 功能簡介
@@ -80,20 +80,44 @@ JWT_SECRET=
 ## 團隊成員
 
 - 彭芷儀 [GitHub](https://github.com/yura813)
-
+  - 新增編輯商品功能
+  - 後台訂單管理
+  - 資料庫架構設計
+   
 - 張馨云 [GitHub](https://github.com/kirua05)
+  - Python 爬蟲清理商品資料，匯入至 PostgreSQL 資料庫
+  - 單一商品頁面
+  - AWS S3 雲端資料庫連接
 
 - 林欣雨 [GitHub](https://github.com/Raelin930)
+  - 訂單管理頁面實作
+  - 訂單 API
+  - 資料庫
 
 - 巫坤郁 [GitHub](https://github.com/kenyykd)
-
+  - 串接綠界金流
+  - 購物車詳細資料切版
+  - 商品標籤
+  
 - 謝聿涵 [GitHub](https://github.com/hsiehyuhan)
+  - 串接購物車
+  - 資料庫
+  - 登入使用者處理購物車資料方式
 
 - 侯建男 [GitHub](https://github.com/Nannn1997)
-
+  - 網站首頁切版
+  - 商品資料串接
+  - 搜尋商品功能
+    
 - 楊子毅 [GitHub](https://github.com/ziyi1998)
+  - 登入註冊功能
+  - 會員編輯資料功能
+  - 資料庫
 
 - 吳禹慧 [GitHub](https://github.com/rosewuuu)
+  - 通知頁面
+  - 資料庫
+  - 技術簡報製作
 
 ## 其他
 
