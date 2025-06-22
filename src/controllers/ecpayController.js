@@ -79,16 +79,8 @@ exports.createOrder = async (req, res) => {
 
 exports.handleReturn = async (req, res) => {
   console.log('綠界回傳資料 (POST):', req.body);
-  const {
-    CheckMacValue,
-    MerchantTradeNo,
-    RtnCode,
-    RtnMsg,
-    PaymentDate,
-    SimulatePaid,
-    TradeNo,
-    totalAmount,
-  } = req.body;
+  const { CheckMacValue, MerchantTradeNo, RtnCode, RtnMsg, PaymentDate, SimulatePaid, TradeNo } =
+    req.body;
   const data = { ...req.body };
   delete data.CheckMacValue;
 
@@ -125,12 +117,10 @@ exports.handleReturn = async (req, res) => {
         .where(eq(ecpayOrdersTable.merchantTradeNo, MerchantTradeNo));
 
       console.log(`資料庫訂單 ${MerchantTradeNo} 狀態已更新為 ${newTradeStatus}`);
-
       const [updatedOrder] = await db
         .update(ordersTable)
         .set({
           status: 'paid',
-          totalPrice: Number(totalAmount),
           updatedAt: new Date(),
         })
         .where(eq(ordersTable.orderNumber, MerchantTradeNo))

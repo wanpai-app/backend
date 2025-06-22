@@ -1,37 +1,30 @@
 const express = require('express');
 const router = express.Router();
-const authenticateToken = require('../middleware/auth');
 const { login } = require('../controllers/userController');
-
+const { orderSchema } = require('../validators/orderValidator');
 const {
   getUserOrders,
   getOrderById,
+  getAdminOrders,
+  createOrder,
   updateOrder,
   softDeleteOrder,
-  getAllOrders,
 } = require('../controllers/orderController');
 
-const isAdmin = (req, res, next) => {
-  if (req.user?.role !== 'admin') {
-    return res.status(403).json({ error: '無權限操作' });
-  }
-  next();
-};
+const authenticateToken = require('../middleware/auth');
+const isAdmin = require('../middleware/isAdmin');
+const validate = require('../middleware/validate');
 
-const isUser = (req, res, next) => {
-  if (req.user?.role !== 'user') {
-    return res.status(403).json({ error: '僅限會員操作' });
-  }
-  next();
-};
 router.post('/auth/login', login);
 
-router.get('/', authenticateToken, isUser, getUserOrders);
-router.get('/:id', authenticateToken, isUser, getOrderById);
+router.get('/', authenticateToken, getUserOrders);
+router.get('/:id', authenticateToken, getOrderById);
 
-router.get('/admin', authenticateToken, isAdmin, getAllOrders);
-router.get('/admin/:id', authenticateToken, isAdmin, getOrderById);
-router.put('/admin/:id', authenticateToken, isAdmin, updateOrder);
-router.delete('/admin/:id', authenticateToken, isAdmin, softDeleteOrder);
+// for admin
+router.get('/admin/orders', authenticateToken, isAdmin, getAdminOrders);
+router.get('/admin/orders/:id', authenticateToken, isAdmin, getOrderById);
+router.put('/admin/orders/:id', authenticateToken, isAdmin, updateOrder);
+router.post('/admin/orders', authenticateToken, validate(orderSchema), isAdmin, createOrder);
+router.delete('/admin/orders/:id', authenticateToken, isAdmin, softDeleteOrder);
 
 module.exports = router;
