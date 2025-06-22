@@ -19,17 +19,16 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
-app.use(express.json());
 
 app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/ecpay', ecpayRoutes);
+app.use('/api', productRoutes);
+app.use('/api', ecpayRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api', tagsRoutes);
 app.use('/api/favorites', favoriteRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api', orderRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
