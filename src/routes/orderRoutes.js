@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authenticateToken = require('../middleware/auth');
+const { login } = require('../controllers/userController');
 
 const {
   getUserOrders,
@@ -23,13 +24,14 @@ const isUser = (req, res, next) => {
   }
   next();
 };
+router.post('/auth/login', login);
 
 router.get('/', authenticateToken, isUser, getUserOrders);
 router.get('/:id', authenticateToken, isUser, getOrderById);
 
-router.get('/admin/orders', authenticateToken, isAdmin, getAllOrders);
-router.get('/admin/orders/:id', authenticateToken, isAdmin, getOrderById);
-router.put('/admin/orders/:id', authenticateToken, isAdmin, updateOrder);
-router.delete('/admin/orders/:id', authenticateToken, isAdmin, softDeleteOrder);
+router.get('/admin', authenticateToken, isAdmin, getAllOrders);
+router.get('/admin/:id', authenticateToken, isAdmin, getOrderById);
+router.put('/admin/:id', authenticateToken, isAdmin, updateOrder);
+router.delete('/admin/:id', authenticateToken, isAdmin, softDeleteOrder);
 
 module.exports = router;
