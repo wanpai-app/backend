@@ -38,7 +38,6 @@ const uploadImage = async (image) => {
       Location: `${CDN_BASE}/${key}`,
     };
   } catch (err) {
-    console.error('上傳圖片錯誤:', err);
     throw new Error(`圖片上傳失敗，請稍後再試：${err.message}`);
   }
 };
@@ -63,7 +62,6 @@ const deleteImage = async (input) => {
 
     await s3.send(command);
   } catch (err) {
-    console.error('刪除圖片錯誤:', err);
     throw new Error(`圖片刪除失敗，請稍後再試：${err.message}`);
   }
 };

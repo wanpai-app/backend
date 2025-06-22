@@ -26,13 +26,7 @@ const { validateHasCoverImage } = require('../validators/hasCoverImageValidator'
 router.get('/admin/products', authenticateToken, isAdmin, getAllProducts);
 router.get('/admin/products/:id', authenticateToken, isAdmin, getProductById);
 
-router.post(
-  '/admin/products',
-  authenticateToken,
-  isAdmin,
-  validate(productSchema),
-  createProduct
-);
+router.post('/admin/products', authenticateToken, isAdmin, validate(productSchema), createProduct);
 
 router.put(
   '/admin/products/:id',

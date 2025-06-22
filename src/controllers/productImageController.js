@@ -36,8 +36,7 @@ const uploadProductImage = async (req, res) => {
     });
 
     res.status(201).json({ message: '圖片上傳成功' });
-  } catch (err) {
-    console.error('圖片上傳失敗:', err);
+  } catch {
     res.status(500).json({ error: '圖片上傳失敗' });
   }
 };
@@ -49,11 +48,8 @@ const removeProductImage = async (req, res) => {
   }
 
   try {
-    console.log('[DEBUG] 要刪除的圖片 ID:', id);
-
     const deleted = await db.transaction(async (tx) => {
       const result = await deleteProductImage(tx, id);
-      console.log('[DEBUG] 刪除結果:', result);
       return result;
     });
 
@@ -62,8 +58,7 @@ const removeProductImage = async (req, res) => {
     }
 
     res.json({ message: '圖片已刪除' });
-  } catch (err) {
-    console.error('刪除圖片失敗:', err);
+  } catch {
     res.status(500).json({ error: '刪除圖片失敗' });
   }
 };
@@ -88,8 +83,7 @@ const getProductImagesByProductId = async (req, res) => {
       .orderBy(asc(productImagesTable.orderIndex));
 
     res.json(images);
-  } catch (err) {
-    console.error('取得圖片清單失敗:', err);
+  } catch {
     res.status(500).json({ error: '伺服器錯誤' });
   }
 };
