@@ -104,7 +104,6 @@ const getUserOrders = async (req, res) => {
 
   try {
     const orders = await findOrders({ userId });
-    console.log(' 撈到的訂單:', orders);
     res.json(orders);
   } catch (error) {
     console.error(' 取得訂單失敗:', error);
