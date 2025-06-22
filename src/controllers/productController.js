@@ -2,7 +2,10 @@ const db = require('../configs/db');
 const { productsTable } = require('../models/productSchema');
 const { productImagesTable } = require('../models/productImageSchema');
 const { inArray, eq, and, asc } = require('drizzle-orm');
+
 const isAdmin = require('../middleware/isAdmin');
+const { favoritesTable } = require('../models/favoriteSchema');
+const jwt = require('jsonwebtoken');
 
 const getAllProducts = async (req, res) => {
   const status = req.query.status;
@@ -83,6 +86,21 @@ const getProductById = async (req, res) => {
   const id = Number(req.params.id);
   if (isNaN(id)) return res.status(400).json({ error: '無效的ID' });
 
+  // ✅ 嘗試解析 JWT，不強制登入
+  const authHeader = req.headers['authorization'];
+  let userId = null;
+
+  if (authHeader) {
+    const token = authHeader.split(' ')[1]; // 取得 "Bearer token" 中的 token
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_fallback_secret');
+      userId = decoded.id; // 解出使用者 ID
+      // eslint-disable-next-line no-unused-vars
+    } catch (err) {
+      // token 錯誤，不做處理，userId 保持為 null
+    }
+  }
+
   try {
     const rows = await db.select().from(productsTable).where(eq(productsTable.id, id));
 
@@ -100,6 +118,16 @@ const getProductById = async (req, res) => {
       images.find((img) => img.isCover) || images.find((img) => img.orderIndex === 0) || images[0];
 
     const previewImages = images.filter((img) => img.id !== coverImage?.id).slice(0, 2);
+    let isFavorited = false;
+
+    if (userId) {
+      const favorite = await db
+        .select()
+        .from(favoritesTable)
+        .where(and(eq(favoritesTable.userId, userId), eq(favoritesTable.productId, id)));
+
+      isFavorited = favorite.length > 0;
+    }
 
     res.json({
       ...product,
@@ -108,6 +136,7 @@ const getProductById = async (req, res) => {
         previews: previewImages,
         // all: images,
       },
+      isFavorited,
     });
   } catch (err) {
     console.error('查詢商品錯誤:', err);
