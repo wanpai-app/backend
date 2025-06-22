@@ -5,12 +5,16 @@ const db = require('../configs/db');
 const { usersTable } = require('../models/userSchema');
 const { eq, or } = require('drizzle-orm');
 
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
+
 const generateToken = (user) => {
   return jwt.sign(
     {
       userId: user.id,
       email: user.email,
       username: user.username,
+      role: user.role || 'user',
     },
     process.env.JWT_SECRET,
     { expiresIn: '1d' }
@@ -22,11 +26,13 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: '/api/users/google/callback',
+      callbackURL: `${BACKEND_URL}/api/users/google/callback`,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        console.log('Google profile:', profile);
+        if (!profile.emails || profile.emails.length === 0) {
+          return done(new Error('Google 帳號未提供 email 權限'), null);
+        }
 
         const existingUser = await db
           .select()
@@ -61,6 +67,7 @@ passport.use(
               email: profile.emails[0].value,
               provider: 'google',
               password: null,
+              role: 'user',
             })
             .returning();
 
@@ -74,21 +81,33 @@ passport.use(
 );
 
 const googleAuth = (req, res) => {
-  passport.authenticate('google', { scope: ['email', 'profile'] })(req, res);
+  passport.authenticate('google', {
+    scope: ['email', 'profile'],
+  })(req, res);
 };
 
 const googleAuthCallback = (req, res, next) => {
   passport.authenticate('google', { session: false }, (err, user) => {
     if (err) {
-      return res.redirect('http://localhost:5173/login?error=auth_failed');
+      let errorType = 'auth_failed';
+      if (err.message && err.message.includes('email')) {
+        errorType = 'email_required';
+      }
+
+      return res.redirect(`${FRONTEND_URL}/authform?error=${errorType}`);
     }
+
     if (!user) {
-      return res.redirect('http://localhost:5173/login?error=no_user');
+      return res.redirect(`${FRONTEND_URL}/authform?error=no_user`);
     }
 
-    const token = generateToken(user);
-
-    res.redirect(`http://localhost:5173/home?user=${token}`);
+    try {
+      const token = generateToken(user);
+      res.redirect(`${FRONTEND_URL}/authform?token=${token}`);
+    } catch (tokenError) {
+      console.error('Token generation error:', tokenError);
+      res.redirect(`${FRONTEND_URL}/authform?error=token_failed`);
+    }
   })(req, res, next);
 };
 

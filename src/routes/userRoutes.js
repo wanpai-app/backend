@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
 const authenticateToken = require('../middleware/auth');
-const { googleAuth, googleAuthCallback } = require('../controllers/ouathController');
+const { googleAuth, googleAuthCallback } = require('../controllers/oauthController');
 
 router.post('/register', userController.register);
 router.post('/login', userController.login);
