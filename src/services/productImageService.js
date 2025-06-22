@@ -23,12 +23,9 @@ const createProductImage = async (tx, product, file, isCover = false) => {
       imgUrl: s3Result.Location,
       orderIndex,
       isCover,
-      createdAt: sql`now()`,
-      updatedAt: sql`now()`,
     });
   } catch (err) {
-    console.error('圖片上傳失敗:', err);
-    throw err;
+    throw new Error(`圖片上傳失敗：${err.message}`);
   }
 };
 
@@ -46,7 +43,7 @@ const deleteProductImages = async (tx, productId) => {
     try {
       await deleteImage(img.imgUrl);
     } catch (err) {
-      console.error('刪除S3圖片失敗:', img.imgUrl, err);
+      throw new Error(`刪除 S3 圖片失敗（imgUrl: ${img.imgUrl}）：${err.message}`);
     }
   }
   return true;
@@ -62,7 +59,7 @@ const deleteProductImage = async (tx, imageId) => {
   try {
     await deleteImage(img.imgUrl);
   } catch (err) {
-    console.error('刪除S3圖片失敗:', img.imgUrl, err);
+    throw new Error(`刪除 S3 單張圖片失敗（imgUrl: ${img.imgUrl}）：${err.message}`);
   }
 
   await tx.delete(productImagesTable).where(eq(productImagesTable.id, imageId));

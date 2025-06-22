@@ -5,12 +5,6 @@ const { favoritesTable } = require('../models/favoriteSchema');
 const jwt = require('jsonwebtoken');
 
 const { inArray, eq, and, asc } = require('drizzle-orm');
-const isAdmin = require('../middleware/isAdmin');
-const {
-  createProductImage,
-  updateProductImage,
-  deleteProductImages,
-} = require('./productImageController');
 const { deleteProductImages } = require('../services/productImageService');
 const { uploadProductImage } = require('../controllers/productImageController');
 
@@ -66,7 +60,6 @@ const getProductById = async (req, res) => {
   const id = Number(req.params.id);
   if (isNaN(id)) return res.status(400).json({ error: '無效的ID' });
 
-  // ✅ 嘗試解析 JWT，不強制登入
   const authHeader = req.headers['authorization'];
   let userId = null;
 
@@ -119,8 +112,7 @@ const getProductById = async (req, res) => {
       },
       isFavorited,
     });
-  } catch (err) {
-    console.error('查詢商品錯誤:', err);
+  } catch {
     res.status(500).json({ error: '伺服器錯誤' });
   }
 };
@@ -135,8 +127,6 @@ const createProduct = async (req, res) => {
         .insert(productsTable)
         .values({
           ...req.body,
-          createdAt: sql`now()`,
-          updatedAt: sql`now()`,
         })
         .returning();
 
@@ -150,9 +140,8 @@ const createProduct = async (req, res) => {
 
       res.status(201).json(inserted);
     });
-  } catch (err) {
-    console.error('商品建立失敗:', err);
-    res.status(500).json({ error: err.message });
+  } catch {
+    res.status(500).json({ error: '新增商品失敗，請稍後再試' });
   }
 };
 
@@ -169,7 +158,6 @@ const updateProduct = async (req, res) => {
         .update(productsTable)
         .set({
           ...req.body,
-          updatedAt: sql`now()`,
         })
         .where(eq(productsTable.id, id))
         .returning();
@@ -186,9 +174,8 @@ const updateProduct = async (req, res) => {
 
       res.status(200).json(updated);
     });
-  } catch (err) {
-    console.error('商品更新失敗:', err);
-    res.status(500).json({ error: err.message });
+  } catch {
+    res.status(500).json({ error: '更新商品失敗' });
   }
 };
 
@@ -208,9 +195,8 @@ const deleteProductById = async (req, res) => {
     });
 
     res.json({ message: '商品與相關圖片已刪除' });
-  } catch (err) {
-    console.error('刪除商品失敗:', err);
-    res.status(500).json({ error: '刪除商品失敗：' + err.message });
+  } catch {
+    res.status(500).json({ error: '刪除商品失敗' });
   }
 };
 
