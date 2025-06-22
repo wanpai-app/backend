@@ -1,7 +1,8 @@
 const db = require('../configs/db');
 const { cartItemsTable } = require('../models/cartSchema');
 const { productsTable } = require('../models/productSchema');
-const { eq, and } = require('drizzle-orm');
+const { productImagesTable } = require('../models/productImageSchema');
+const { eq, and, asc, inArray } = require('drizzle-orm');
 
 const getCart = async (req, res) => {
   try {
@@ -22,7 +23,41 @@ const getCart = async (req, res) => {
       .leftJoin(productsTable, eq(cartItemsTable.productId, productsTable.id))
       .where(and(eq(cartItemsTable.userId, userId), eq(cartItemsTable.softDel, false)));
 
-    res.json(cartItems);
+    if (cartItems.length > 0) {
+      const productIds = cartItems.map(item => item.productId);
+      
+      const productImages = await db
+        .select({
+          productId: productImagesTable.productId,
+          imgUrl: productImagesTable.imgUrl,
+          isCover: productImagesTable.isCover,
+          orderIndex: productImagesTable.orderIndex,
+        })
+        .from(productImagesTable)
+        .where(inArray(productImagesTable.productId, productIds))
+        .orderBy(asc(productImagesTable.productId), asc(productImagesTable.orderIndex));
+
+      const imageMap = new Map();
+      for (const img of productImages) {
+        if (!imageMap.has(img.productId)) {
+          imageMap.set(img.productId, img.imgUrl);
+        } else if (img.isCover) {
+          imageMap.set(img.productId, img.imgUrl);
+        }
+      }
+
+      const cartItemsWithImages = cartItems.map(item => ({
+        ...item,
+        product: {
+          ...item.product,
+          coverImage: imageMap.get(item.productId) || null,
+        },
+      }));
+
+      res.json(cartItemsWithImages);
+    } else {
+      res.json(cartItems);
+    }
   } catch (err) {
     console.error('取得購物車失敗:', err);
     res.status(500).json({ error: '取得購物車失敗' });
