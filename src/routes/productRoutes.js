@@ -30,8 +30,6 @@ router.post(
   '/admin/products',
   authenticateToken,
   isAdmin,
-  uploadProductImages,
-  validateHasCoverImage,
   validate(productSchema),
   createProduct
 );
@@ -40,9 +38,8 @@ router.put(
   '/admin/products/:id',
   authenticateToken,
   isAdmin,
-  uploadProductImages,
-  validateHasCoverImage,
   validate(productSchema),
+  validateHasCoverImage,
   updateProduct
 );
 
