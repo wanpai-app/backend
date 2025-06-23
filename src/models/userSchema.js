@@ -10,6 +10,8 @@ const usersTable = pgTable('users', {
   updatedAt: timestamp('updated_at').defaultNow(),
   phone: varchar('phone', { length: 10 }),
   address: varchar('address', { length: 255 }),
+  googleId: varchar('google_id', { length: 255 }),
+  provider: varchar('provider', { length: 50 }).default('local'),
 });
 
 module.exports = { usersTable, roleEnum };

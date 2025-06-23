@@ -34,44 +34,57 @@ passport.use(
           return done(new Error('Google 帳號未提供 email 權限'), null);
         }
 
-        const existingUser = await db
-          .select()
-          .from(usersTable)
-          .where(
-            or(eq(usersTable.email, profile.emails[0].value), eq(usersTable.googleId, profile.id))
-          )
-          .limit(1);
+        const userEmail = profile.emails[0].value;
 
-        if (existingUser.length > 0) {
-          let user = existingUser[0];
-          if (!user.googleId) {
-            const updatedUser = await db
-              .update(usersTable)
-              .set({
-                googleId: profile.id,
-                provider: 'google',
-              })
-              .where(eq(usersTable.id, user.id))
-              .returning();
+        try {
+          const existingUser = await db
+            .select()
+            .from(usersTable)
+            .where(eq(usersTable.email, userEmail))
+            .limit(1);
 
-            return done(null, updatedUser[0]);
+          if (existingUser.length > 0) {
+            let user = existingUser[0];
+
+            if (!user.googleId) {
+              try {
+                const updatedUser = await db
+                  .update(usersTable)
+                  .set({
+                    googleId: profile.id,
+                    provider: 'google',
+                  })
+                  .where(eq(usersTable.id, user.id))
+                  .returning();
+
+                return done(null, updatedUser[0]);
+              } catch (updateError) {
+                return done(updateError, null);
+              }
+            }
+
+            return done(null, user);
+          } else {
+            try {
+              const newUser = await db
+                .insert(usersTable)
+                .values({
+                  googleId: profile.id,
+                  username: profile.displayName,
+                  email: userEmail,
+                  provider: 'google',
+                  password: null,
+                  role: 'user',
+                })
+                .returning();
+
+              return done(null, newUser[0]);
+            } catch (insertError) {
+              return done(insertError, null);
+            }
           }
-
-          return done(null, user);
-        } else {
-          const newUser = await db
-            .insert(usersTable)
-            .values({
-              googleId: profile.id,
-              username: profile.displayName,
-              email: profile.emails[0].value,
-              provider: 'google',
-              password: null,
-              role: 'user',
-            })
-            .returning();
-
-          return done(null, newUser[0]);
+        } catch (dbError) {
+          return done(dbError, null);
         }
       } catch (error) {
         return done(error, null);
@@ -93,7 +106,6 @@ const googleAuthCallback = (req, res, next) => {
       if (err.message && err.message.includes('email')) {
         errorType = 'email_required';
       }
-
       return res.redirect(`${FRONTEND_URL}/authform?error=${errorType}`);
     }
 
@@ -105,7 +117,6 @@ const googleAuthCallback = (req, res, next) => {
       const token = generateToken(user);
       res.redirect(`${FRONTEND_URL}/authform?token=${token}`);
     } catch (tokenError) {
-      console.error('Token generation error:', tokenError);
       res.redirect(`${FRONTEND_URL}/authform?error=token_failed`);
     }
   })(req, res, next);

@@ -16,5 +16,7 @@ router.get('/test-token', authenticateToken, (req, res) => {
 
 router.get('/profile', authenticateToken, userController.getProfile);
 router.put('/profile', authenticateToken, userController.updateProfile);
+router.get('/google', googleAuth);
+router.get('/google/callback', googleAuthCallback);
 
 module.exports = router;
