@@ -3,7 +3,7 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const jwt = require('jsonwebtoken');
 const db = require('../configs/db');
 const { usersTable } = require('../models/userSchema');
-const { eq, or } = require('drizzle-orm');
+const { eq } = require('drizzle-orm');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
