@@ -1,9 +1,13 @@
 const db = require('../configs/db');
 const { ordersTable } = require('../models/orderSchema');
-const { eq, and, gte, lte } = require('drizzle-orm');
 const { orderItemsTable } = require('../models/orderItemSchema');
+const { like, eq, and, gte, lte } = require('drizzle-orm');
 
 const getOrderWithItems = async (orderId) => {
+  if (isNaN(orderId)) {
+    throw new Error('傳入的 orderId 無效');
+  }
+
   const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, orderId));
 
   if (!order) return null;
@@ -14,34 +18,45 @@ const getOrderWithItems = async (orderId) => {
     ...order,
     items,
     receiver: {
-      name: order.receiverName,
-      phone: order.receiverPhone,
+      name: order.recipientName,
+      phone: order.recipientPhone,
       address: order.shippingAddress,
-      branch: order.pickupBranch,
-      pickupDeadline: order.pickupDeadline,
     },
   };
 };
 
 const findOrders = async ({ userId, filters = {} }) => {
-  let query = db.select().from(ordersTable).where(eq(ordersTable.isDeleted, false));
+  const conditions = [eq(ordersTable.isDeleted, false)];
+  const { orderNumber, dateRange } = filters;
 
-  if (userId) {
-    query = query.where(eq(ordersTable.userId, userId));
+  if (orderNumber && typeof orderNumber === 'string') {
+    conditions.push(like(ordersTable.orderNumber, `%${orderNumber.trim()}%`));
   }
 
-  if (filters.status) {
-    query = query.where(eq(ordersTable.status, filters.status));
+  if (typeof userId !== 'undefined') {
+    conditions.push(eq(ordersTable.userId, userId));
   }
-  if (filters.startDate && filters.endDate) {
-    query = query.where(
-      and(
-        gte(ordersTable.createdAt, new Date(filters.startDate)),
-        lte(ordersTable.createdAt, new Date(filters.endDate))
-      )
-    );
+
+  if (dateRange && !isNaN(Number(dateRange))) {
+    const days = Number(dateRange);
+    const today = new Date();
+    const past = new Date();
+    past.setDate(today.getDate() - days);
+
+    conditions.push(and(gte(ordersTable.createdAt, past), lte(ordersTable.createdAt, today)));
   }
-  return await query;
+
+  try {
+    const result = await db
+      .select()
+      .from(ordersTable)
+      .where(and(...conditions));
+
+    return result;
+  } catch (err) {
+    console.error('findOrders 查詢失敗:', err);
+    throw err;
+  }
 };
 
 module.exports = {

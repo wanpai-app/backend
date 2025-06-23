@@ -33,20 +33,25 @@ const createOrder = async (req, res) => {
         updatedAt: new Date(),
       })
       .returning();
+
     res.status(201).json(insertedOrder);
   } catch (err) {
+    console.error('建立訂單失敗:', err);
     res.status(500).json({ error: err.message });
   }
 };
 
 const getOrderById = async (req, res) => {
-  const id = Number(req.params.id);
   const userId = req.user?.id;
   const isAdmin = req.user?.role === 'admin';
+  const id = Number(req.params.id);
+
+  if (isNaN(id)) {
+    return res.status(400).json({ error: '訂單 ID 無效' });
+  }
 
   try {
     const order = await getOrderWithItems(id);
-
     if (!order) {
       return res.status(404).json({ message: '找不到該訂單' });
     }
@@ -57,23 +62,17 @@ const getOrderById = async (req, res) => {
 
     res.json(order);
   } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-  try {
-    const filters = req.query;
-    const ordersList = await findOrders({ filters });
-    res.json(ordersList);
-  } catch (err) {
+    console.error('查詢單筆訂單失敗:', err);
     res.status(500).json({ error: err.message });
   }
 };
 
 const updateOrder = async (req, res) => {
   const id = Number(req.params.id);
-  if (isNaN(id)) return res.status(400).json({ error: '無效的ID' });
+  if (isNaN(id)) return res.status(400).json({ error: '無效的 ID' });
 
   try {
-    const [insertedOrder] = await db
+    const [updatedOrder] = await db
       .update(ordersTable)
       .set({
         ...req.body,
@@ -81,15 +80,17 @@ const updateOrder = async (req, res) => {
       })
       .where(eq(ordersTable.id, id))
       .returning();
-    res.status(200).json(insertedOrder);
+
+    res.status(200).json(updatedOrder);
   } catch (err) {
+    console.error('更新訂單失敗:', err);
     res.status(500).json({ error: err.message });
   }
 };
 
 const softDeleteOrder = async (req, res) => {
   const id = Number(req.params.id);
-  if (isNaN(id)) return res.status(400).json({ error: '無效的ID' });
+  if (isNaN(id)) return res.status(400).json({ error: '無效的 ID' });
 
   try {
     const [deleted] = await db
@@ -97,8 +98,10 @@ const softDeleteOrder = async (req, res) => {
       .set({ isDeleted: true })
       .where(eq(ordersTable.id, id))
       .returning();
-    res.status(201).json([deleted]);
+
+    res.status(201).json(deleted);
   } catch (err) {
+    console.error('軟刪除訂單失敗:', err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -106,27 +109,33 @@ const softDeleteOrder = async (req, res) => {
 const getAllOrders = async (req, res) => {
   try {
     const filters = req.query;
+
     const orders = await findOrders({ filters });
     res.json(orders);
   } catch (err) {
+    console.error('取得所有訂單失敗:', err);
     res.status(500).json({ error: err.message });
   }
 };
-
 const getUserOrders = async (req, res) => {
-  if (!req.user || !req.user.id) {
-    console.error(' 沒有抓到 req.user 或 user.id！現在是：', req.user);
+  const userId = req.user?.id;
+  const filters = req.query;
+
+  if (req.user?.role !== 'user') {
+    return res.status(403).json({ error: '僅限會員操作' });
+  }
+
+  if (!userId) {
+    console.error('req.user 無效:', req.user);
     return res.status(401).json({ error: '尚未登入或 token 無效' });
   }
 
-  const userId = req.user.id;
-
   try {
-    const orders = await findOrders({ userId });
+    const orders = await findOrders({ userId, filters });
     res.json(orders);
-  } catch (error) {
-    console.error(' 取得訂單失敗:', error);
-    res.status(500).json({ error: '無法取得訂單' });
+  } catch (err) {
+    console.error('取得會員訂單失敗:', err);
+    res.status(500).json({ error: err.message });
   }
 };
 

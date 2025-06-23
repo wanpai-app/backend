@@ -39,5 +39,8 @@ app.listen(PORT, () => {
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  // ... existing code ...
+
+  res.status(500).json({
+    error: process.env.NODE_ENV === 'production' ? '伺服器發生錯誤，請稍後再試' : err.message,
+  });
 });
