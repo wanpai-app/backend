@@ -24,8 +24,8 @@ const getCart = async (req, res) => {
       .where(and(eq(cartItemsTable.userId, userId), eq(cartItemsTable.softDel, false)));
 
     if (cartItems.length > 0) {
-      const productIds = cartItems.map(item => item.productId);
-      
+      const productIds = cartItems.map((item) => item.productId);
+
       const productImages = await db
         .select({
           productId: productImagesTable.productId,
@@ -46,7 +46,7 @@ const getCart = async (req, res) => {
         }
       }
 
-      const cartItemsWithImages = cartItems.map(item => ({
+      const cartItemsWithImages = cartItems.map((item) => ({
         ...item,
         product: {
           ...item.product,
