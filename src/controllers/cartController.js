@@ -59,8 +59,7 @@ const getCart = async (req, res) => {
       res.json(cartItems);
     }
   } catch (err) {
-    console.error('取得購物車失敗:', err);
-    res.status(500).json({ error: '取得購物車失敗' });
+    res.status(500).json({ error: '取得購物車失敗', details: err.message });
   }
 };
 
