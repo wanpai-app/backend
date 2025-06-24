@@ -11,6 +11,7 @@ const notificationRoutes = require('./src/routes/notificationRoutes');
 const cartRoutes = require('./src/routes/cartRoutes');
 const userOrderRoutes = require('./src/routes/userOrderRoutes');
 const tagsRoutes = require('./src/routes/tagRoutes');
+const stockLogRoutes = require('./src/routes/stockLogRoutes');
 const authRoutes = require('./src/routes/authRoutes');
 const aiRoutes = require('./src/routes/aiRoutes');
 
@@ -34,6 +35,7 @@ app.use('/api', orderRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/user', userOrderRoutes);
 app.use('/api', adminOrderRoutes);
+app.use('/api', stockLogRoutes);
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, '0.0.0.0', () => {
