@@ -14,6 +14,7 @@ const authenticateToken = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await db.select().from(usersTable).where(eq(usersTable.id, decoded.id)).limit(1);
+
     if (user.length === 0) {
       return res.status(401).json({ error: '使用者不存在' });
     }
@@ -24,4 +25,5 @@ const authenticateToken = async (req, res, next) => {
     return res.status(403).json({ error: 'Token 驗證失敗' });
   }
 };
+
 module.exports = authenticateToken;
