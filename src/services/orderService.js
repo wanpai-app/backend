@@ -1,12 +1,8 @@
 const db = require('../configs/db');
-const { eq, and, gte, lte } = require('drizzle-orm');
+const { eq, and, gte, lte, ilike } = require('drizzle-orm');
 const { ordersTable } = require('../models/orderSchema');
 const { orderItemsTable } = require('../models/orderItemSchema');
 const { productImagesTable } = require('../models/productImageSchema');
-
-function isValidDate(val) {
-  return typeof val === 'string' && val.trim() !== '' && !isNaN(new Date(val));
-}
 
 const getOrderWithItems = async (orderId) => {
   const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, orderId));
@@ -48,27 +44,34 @@ const getOrderWithItems = async (orderId) => {
   };
 };
 
+const isValidDate = (date) => !isNaN(new Date(date).getTime());
+
 const findOrders = async ({ userId, filters = {} }) => {
-  let query = db.select().from(ordersTable).where(eq(ordersTable.isDeleted, false));
+  const conditions = [eq(ordersTable.isDeleted, false)];
 
   if (userId) {
-    query = query.where(eq(ordersTable.userId, userId));
+    conditions.push(eq(ordersTable.userId, userId));
   }
 
   if (filters.status) {
-    query = query.where(eq(ordersTable.status, filters.status));
+    conditions.push(eq(ordersTable.status, filters.status));
   }
 
   if (isValidDate(filters.startDate) && isValidDate(filters.endDate)) {
-    query = query.where(
-      and(
-        gte(ordersTable.createdAt, new Date(filters.startDate)),
-        lte(ordersTable.createdAt, new Date(filters.endDate))
-      )
+    conditions.push(
+      gte(ordersTable.createdAt, new Date(filters.startDate)),
+      lte(ordersTable.createdAt, new Date(filters.endDate))
     );
   }
 
-  const orders = await query;
+  if (filters.search) {
+    conditions.push(ilike(ordersTable.orderNumber, `%${filters.search}%`));
+  }
+
+  const orders = await db
+    .select()
+    .from(ordersTable)
+    .where(and(...conditions));
 
   for (const order of orders) {
     const items = await db
