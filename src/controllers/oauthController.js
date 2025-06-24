@@ -11,7 +11,7 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
 const generateToken = (user) => {
   return jwt.sign(
     {
-      userId: user.id,
+      id: user.id,
       email: user.email,
       username: user.username,
       role: user.role || 'user',
@@ -27,6 +27,7 @@ passport.use(
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: `${BACKEND_URL}/api/users/google/callback`,
+      scope: ['profile', 'email'],
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -116,7 +117,7 @@ const googleAuthCallback = (req, res, next) => {
     try {
       const token = generateToken(user);
       res.redirect(`${FRONTEND_URL}/authform?token=${token}`);
-    } catch (tokenError) {
+    } catch {
       res.redirect(`${FRONTEND_URL}/authform?error=token_failed`);
     }
   })(req, res, next);
