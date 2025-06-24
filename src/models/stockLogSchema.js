@@ -22,7 +22,6 @@ const stockLogsTable = pgTable('stock_logs', {
     .notNull()
     .references(() => usersTable.email),
   createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
 });
 
 module.exports = {
