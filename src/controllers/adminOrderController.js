@@ -1,7 +1,6 @@
 const db = require('../configs/db');
 const { ordersTable } = require('../models/orderSchema');
 const { eq, and } = require('drizzle-orm');
-const { findOrders } = require('../services/orderService');
 
 const createOrder = async (req, res) => {
   try {
@@ -32,16 +31,6 @@ const getAdminOrders = async (req, res) => {
       .select()
       .from(ordersTable)
       .where(and(...conditions));
-    res.json(orders);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-const getAllOrders = async (req, res) => {
-  try {
-    const filters = req.query;
-    const orders = await findOrders({ filters });
     res.json(orders);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -86,7 +75,6 @@ const updateOrder = async (req, res) => {
 module.exports = {
   createOrder,
   getAdminOrders,
-  getAllOrders,
   softDeleteOrder,
   updateOrder,
 };
