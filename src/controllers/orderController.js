@@ -14,8 +14,16 @@ const getUserOrders = async (req, res) => {
 
   try {
     const cleanFilters = {};
-    if (filters.status && typeof filters.status === 'string' && filters.status.trim() !== '') {
-      cleanFilters.status = filters.status;
+    if (filters.search && typeof filters.search === 'string' && filters.search.trim() !== '') {
+      cleanFilters.search = filters.search;
+    }
+
+    if (
+      filters.orderNumber &&
+      typeof filters.orderNumber === 'string' &&
+      filters.orderNumber.trim() !== ''
+    ) {
+      cleanFilters.orderNumber = filters.orderNumber;
     }
 
     if (
