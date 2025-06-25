@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getAllFilterTags, getProductsByTagnames } = require('../controllers/tagsController');
+const { getAllFilterTags, getProductsByTagnames } = require('../controllers/tagController');
 router.get('/tags/filter', getAllFilterTags);
 
 router.get('/tags/filterByTagnames', getProductsByTagnames);

@@ -1,5 +1,5 @@
 const { eq, inArray, and } = require('drizzle-orm');
-const { tagsTable, typeEnum } = require('../models/tagsSchema');
+const { tagsTable, typeEnum } = require('../models/tagSchema');
 const { productsTable } = require('../models/productSchema');
 const { productTagSTable } = require('../models/productTagSchema');
 const { productImagesTable } = require('../models/productImageSchema');
@@ -33,8 +33,7 @@ const tagsController = {
         .where(eq(tagsTable.type, typeEnum.enumValues[0]));
 
       res.status(200).json({ brands, series, ip });
-    } catch (error) {
-      console.error('Error fetching filter tags:', error);
+    } catch {
       res.status(500).json({ message: 'Internal server error' });
     }
   },
@@ -91,8 +90,7 @@ const tagsController = {
       }));
 
       res.json({ products: productsWithCovers });
-    } catch (error) {
-      console.error('[API FATAL ERROR] in getProductsByTagnames:', error);
+    } catch {
       res.status(500).json({ message: 'Internal server error' });
     }
   },

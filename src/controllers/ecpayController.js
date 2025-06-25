@@ -71,8 +71,7 @@ exports.createOrder = async (req, res) => {
 
     res.set('Content-Type', 'text/html; charset=utf-8');
     res.send(html);
-  } catch (error) {
-    console.error('儲存訂單到資料庫失敗:', error);
+  } catch {
     res.status(500).json({ error: '建立訂單失敗，請稍後再試。' });
   }
 };
@@ -101,7 +100,6 @@ exports.handleReturn = async (req, res) => {
         console.log(`訂單 ${MerchantTradeNo} 支付失敗，RtnCode: ${RtnCode}, RtnMsg: ${RtnMsg}`);
       }
 
-      // 3. 更新資料庫中的訂單狀態
       await db
         .update(ecpayOrdersTable)
         .set({

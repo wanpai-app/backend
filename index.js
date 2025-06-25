@@ -9,7 +9,7 @@ const orderRoutes = require('./src/routes/orderRoutes');
 const notificationRoutes = require('./src/routes/notificationRoutes');
 const cartRoutes = require('./src/routes/cartRoutes');
 
-const tagsRoutes = require('./src/routes/tagsRoutes');
+const tagsRoutes = require('./src/routes/tagRoutes');
 const authRoutes = require('./src/routes/authRoutes');
 const aiRoutes = require('./src/routes/aiRoutes');
 
@@ -35,9 +35,4 @@ app.use('/api/ai', aiRoutes);
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on http://0.0.0.0:${PORT}`);
-});
-
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  // ... existing code ...
 });
