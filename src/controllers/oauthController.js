@@ -5,7 +5,7 @@ const db = require('../configs/db');
 const { usersTable } = require('../models/userSchema');
 const { eq } = require('drizzle-orm');
 
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://wanpai-frontend.zeabur.app';
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
 
 const generateToken = (user) => {

@@ -3,6 +3,6 @@ const router = express.Router();
 const aiController = require('../controllers/aiController');
 
 // POST /api/ai/chat
-router.post('/chat', aiController.chat);
+router.post('/ai/chat', aiController.chat);
 
 module.exports = router;
