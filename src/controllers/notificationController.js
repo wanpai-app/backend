@@ -2,7 +2,7 @@ const db = require('../configs/db');
 const { notificationsTable } = require('../models/notificationSchema');
 const { eq, desc } = require('drizzle-orm');
 
-exports.getNotifications = async (req, res) => {
+const getNotifications = async (req, res) => {
   try {
     const userId = req.user.id;
 
@@ -13,13 +13,12 @@ exports.getNotifications = async (req, res) => {
       .orderBy(desc(notificationsTable.createdAt));
 
     res.json(notifications);
-  } catch (error) {
-    console.error('取得通知失敗：', error);
+  } catch {
     res.status(500).json({ error: '伺服器錯誤，無法取得通知' });
   }
 };
 
-exports.createNotification = async (req, res) => {
+const createNotification = async (req, res) => {
   try {
     const userId = req.user.id;
     const { type, message, orderId } = req.body;
@@ -32,13 +31,12 @@ exports.createNotification = async (req, res) => {
     });
 
     res.status(201).json({ message: '通知已建立' });
-  } catch (error) {
-    console.error('建立通知失敗：', error);
+  } catch {
     res.status(500).json({ error: '建立通知失敗' });
   }
 };
 
-exports.markNotificationAsRead = async (req, res) => {
+const markNotificationAsRead = async (req, res) => {
   const id = Number(req.params.id);
   if (isNaN(id)) return res.status(400).json({ error: '無效的ID' });
 
@@ -63,8 +61,13 @@ exports.markNotificationAsRead = async (req, res) => {
       .returning();
 
     res.json(updatedNotification);
-  } catch (error) {
-    console.error('標記已讀失敗：', error);
+  } catch {
     res.status(500).json({ error: '伺服器錯誤，無法標記已讀' });
   }
+};
+
+module.exports = {
+  getNotifications,
+  createNotification,
+  markNotificationAsRead,
 };
