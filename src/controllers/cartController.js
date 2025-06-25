@@ -99,7 +99,6 @@ const addToCart = async (req, res) => {
         .update(cartItemsTable)
         .set({
           quantity: existingItem[0].quantity + quantity,
-          updatedAt: new Date(),
         })
         .where(eq(cartItemsTable.id, existingItem[0].id))
         .returning();
@@ -120,8 +119,7 @@ const addToCart = async (req, res) => {
       .returning();
 
     res.status(201).json(newItem);
-  } catch (err) {
-    console.error('加入購物車失敗:', err);
+  } catch {
     res.status(500).json({ error: '加入購物車失败' });
   }
 };
@@ -156,8 +154,7 @@ const updateCartItem = async (req, res) => {
     }
 
     res.json(updatedItem);
-  } catch (err) {
-    console.error('更新購物車失敗:', err);
+  } catch {
     res.status(500).json({ error: '更新購物車失敗' });
   }
 };
@@ -187,8 +184,7 @@ const removeFromCart = async (req, res) => {
     }
 
     res.json({ message: '商品已從購物車中移除' });
-  } catch (err) {
-    console.error('從購物車移除商品失敗:', err);
+  } catch {
     res.status(500).json({ error: '從購物車移除商品失敗' });
   }
 };
@@ -206,8 +202,7 @@ const clearCart = async (req, res) => {
       .where(and(eq(cartItemsTable.userId, userId), eq(cartItemsTable.softDel, false)));
 
     res.json({ message: '購物車已清空' });
-  } catch (err) {
-    console.error('清空購物車失敗:', err);
+  } catch {
     res.status(500).json({ error: '清空購物車失敗' });
   }
 };

@@ -9,9 +9,6 @@ function isValidEmail(email) {
 }
 
 const register = async (req, res) => {
-  console.log('收到註冊請求');
-  console.log('req.body:', req.body);
-
   const { username, email, password } = req.body;
 
   if (!username || !email || !password) {
@@ -39,13 +36,11 @@ const register = async (req, res) => {
 
     res.status(201).json({ message: '註冊成功' });
   } catch (err) {
-    console.error('❌ 註冊失敗:', err);
     res.status(500).json({ error: '伺服器錯誤', detail: err.message });
   }
 };
 
 const login = async (req, res) => {
-  console.log('收到登入請求');
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -57,6 +52,10 @@ const login = async (req, res) => {
 
     if (user.length === 0) {
       return res.status(401).json({ error: 'Email 或密碼錯誤' });
+    }
+
+    if (user[0].provider !== 'local') {
+      return res.status(403).json({ error: '請使用第三方登入方式' });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user[0].password);
@@ -73,8 +72,7 @@ const login = async (req, res) => {
     );
 
     res.status(200).json({ message: '登入成功', token, role: user[0].role });
-  } catch (err) {
-    console.error('登入失敗', err);
+  } catch {
     res.status(500).json({ error: '伺服器錯誤，請稍後再試' });
   }
 };
