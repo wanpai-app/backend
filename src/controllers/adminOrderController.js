@@ -2,22 +2,6 @@ const db = require('../configs/db');
 const { ordersTable } = require('../models/orderSchema');
 const { eq, and } = require('drizzle-orm');
 
-const createOrder = async (req, res) => {
-  try {
-    const [insertedOrder] = await db
-      .insert(ordersTable)
-      .values({
-        ...req.body,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
-    res.status(201).json(insertedOrder);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
 const getAdminOrders = async (req, res) => {
   const status = req.query.status;
   const conditions = [eq(ordersTable.isDeleted, false)];
@@ -73,7 +57,6 @@ const updateOrder = async (req, res) => {
 };
 
 module.exports = {
-  createOrder,
   getAdminOrders,
   softDeleteOrder,
   updateOrder,

@@ -31,6 +31,8 @@ const ordersTable = pgTable('orders', {
   status: orderStatusEnum('status').default('pending').notNull(),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
+  shippedAt: timestamp('shipped_at'),
+  deliveredAt: timestamp('delivered_at'),
   isDeleted: boolean('is_deleted').default(false),
 });
 
