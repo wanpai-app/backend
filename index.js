@@ -5,7 +5,6 @@ const cors = require('cors');
 const productRoutes = require('./src/routes/productRoutes');
 const userRoutes = require('./src/routes/userRoutes');
 const ecpayRoutes = require('./src/routes/ecpayRoutes');
-const orderRoutes = require('./src/routes/orderRoutes');
 const adminOrderRoutes = require('./src/routes/adminOrderRoutes');
 const notificationRoutes = require('./src/routes/notificationRoutes');
 const cartRoutes = require('./src/routes/cartRoutes');
@@ -30,9 +29,8 @@ app.use('/api/cart', cartRoutes);
 app.use('/api', tagsRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api', orderRoutes);
 app.use('/api/ai', aiRoutes);
-app.use('/api/user', userOrderRoutes);
+app.use('/api', userOrderRoutes);
 app.use('/api', adminOrderRoutes);
 
 const PORT = process.env.PORT || 8080;

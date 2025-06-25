@@ -50,8 +50,8 @@ const getUserOrders = async (req, res) => {
   const userId = req.user?.id;
   const filters = req.query;
 
-  if (req.user?.role !== 'user') {
-    return res.status(403).json({ error: '僅限會員操作' });
+  if (!req.user?.role || !['user', 'admin'].includes(req.user.role)) {
+    return res.status(403).json({ error: '需要會員或管理員權限' });
   }
 
   if (!userId) {
