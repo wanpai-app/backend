@@ -1,4 +1,50 @@
 const { findOrders, getOrderWithItems } = require('../services/orderService');
+const db = require('../configs/db');
+const { ordersTable } = require('../models/orderSchema');
+
+const createOrder = async (req, res) => {
+  try {
+    const {
+      userId,
+      orderNumber,
+      recipientName,
+      recipientPhone,
+      shippingAddress,
+      totalPrice,
+      quantity,
+    } = req.body;
+
+    if (
+      !userId ||
+      !orderNumber ||
+      !recipientName ||
+      !recipientPhone ||
+      !shippingAddress ||
+      !totalPrice ||
+      !quantity
+    ) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const [insertedOrder] = await db
+      .insert(ordersTable)
+      .values({
+        userId,
+        orderNumber,
+        recipientName,
+        recipientPhone,
+        shippingAddress,
+        totalPrice,
+        quantity,
+      })
+      .returning();
+
+    res.status(201).json(insertedOrder);
+  } catch (err) {
+    console.error('[createOrder] error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
 
 const getUserOrders = async (req, res) => {
   const userId = req.user?.id;
@@ -75,7 +121,58 @@ const getOrderById = async (req, res) => {
   }
 };
 
+const applyReturn = async (req, res) => {
+  const userId = req.user?.id;
+  const orderId = Number(req.params.id);
+  const { reason, description } = req.body;
+
+  if (isNaN(orderId)) {
+    return res.status(400).json({ error: '訂單 ID 無效' });
+  }
+
+  if (!reason || !description) {
+    return res.status(400).json({ error: '請提供退貨原因和描述' });
+  }
+
+  try {
+    const order = await getOrderWithItems(orderId);
+    if (!order) {
+      return res.status(404).json({ message: '找不到該訂單' });
+    }
+
+    if (order.userId !== userId) {
+      return res.status(403).json({ error: '無權操作此訂單' });
+    }
+
+    if (!['delivered', 'shipped'].includes(order.status)) {
+      return res.status(400).json({ error: '此訂單狀態無法申請退貨' });
+    }
+
+    const { ordersTable } = require('../models/orderSchema');
+    const { eq } = require('drizzle-orm');
+    const db = require('../configs/db');
+
+    const [updatedOrder] = await db
+      .update(ordersTable)
+      .set({
+        status: 'returned',
+      })
+      .where(eq(ordersTable.id, orderId))
+      .returning();
+
+    res.json({
+      message: '退貨申請已提交',
+      order: updatedOrder,
+      returnInfo: { reason, description },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 module.exports = {
+  createOrder,
   getUserOrders,
   getOrderById,
+  applyReturn,
 };

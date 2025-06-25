@@ -35,8 +35,8 @@ const getOrderWithItems = async (orderId) => {
     items,
     totalPrice: total,
     receiver: {
-      name: order.receiverName,
-      phone: order.receiverPhone,
+      name: order.recipientName,
+      phone: order.recipientPhone,
       address: order.shippingAddress,
       branch: order.pickupBranch,
       pickupDeadline: order.pickupDeadline,
