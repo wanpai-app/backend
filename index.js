@@ -13,6 +13,7 @@ const userOrderRoutes = require('./src/routes/userOrderRoutes');
 const tagsRoutes = require('./src/routes/tagRoutes');
 const authRoutes = require('./src/routes/authRoutes');
 const aiRoutes = require('./src/routes/aiRoutes');
+const productRecommendRoutes = require('./src/routes/productRecommendRoutes');
 
 const favoriteRoutes = require('./src/routes/favoriteRoutes');
 
@@ -23,6 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
 app.use('/api/auth', authRoutes);
+app.use('/api', productRecommendRoutes);
 app.use('/api', productRoutes);
 app.use('/api', ecpayRoutes);
 app.use('/api/notifications', notificationRoutes);
