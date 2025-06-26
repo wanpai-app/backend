@@ -8,6 +8,12 @@ const { productTagSTable } = require('../models/productTagSchema');
 const { eq, and, ilike, inArray } = require('drizzle-orm');
 const axios = require('axios');
 
+// 導入 services
+const productSearchService = require('../services/ai/productSearchService');
+const recommendationService = require('../services/ai/recommendationService');
+const smartSearchService = require('../services/ai/smartSearchService');
+const textProcessingService = require('../services/ai/textProcessingService');
+
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const getProductsFromAPI = async () => {
@@ -42,302 +48,17 @@ const getProductsByTagnamesFromAPI = async (tagnames) => {
   }
 };
 
-const extractProductKeywords = (message) => {
-  const productKeywords = [
-    '鋼彈',
-    '高達',
-    'GUNDAM',
-    'gundam',
-    'Gundam',
-    '變形金剛',
-    '柯博文',
-    '大黃蜂',
-    '無職轉生',
-    '魯迪烏斯',
-    '艾莉絲',
-    '希爾菲',
-    '遊戲王',
-    'Yu-Gi-Oh',
-    '百獸王',
-    'GOLION',
-    '河馬',
-    'hippo',
-    '閃電霹靂車',
-    '數碼寶貝',
-    'Digimon',
-    '藍寶堅尼',
-    'Lamborghini',
-    '初音未來',
-    'Hatsune Miku',
-    'Miku',
-    '假面騎士',
-    'Kamen Rider',
-    '哥吉拉',
-    'Godzilla',
-    '精靈寶可夢',
-    '寶可夢',
-    '皮卡丘',
-    'Pokemon',
-    'pokemon',
-    '魔物獵人',
-    'Monster Hunter',
-    'Overlord',
-    'overlord',
-    '雅兒貝德',
-    '安茲',
-    '孤獨搖滾',
-    '狼與辛香料',
-    '蔚藍檔案',
-    'Blue Archive',
-    '超人力霸王',
-    'Ultraman',
-    '犬夜叉',
-    'Inuyasha',
-    '莉可麗絲',
-    'LycoReco',
-    '魔神Z',
-    'Mazinger Z',
-    '女神異聞錄',
-    'Persona',
-    '史努比',
-    'Snoopy',
-    '崩壞:星穹鐵道',
-    '星穹鐵道',
-    '熊熊遇見你',
-    'We Bare Bears',
-    '瑞克和莫蒂',
-    'Rick and Morty',
-    '探險活寶',
-    'Adventure Time',
-    'hololive',
-    '夢想成為魔法少女',
-    '環太平洋',
-    'Pacific Rim',
-    '絕區零',
-    'Zenless Zone Zero',
-    '物語系列',
-    'Monogatari',
-    '勝利女神：妮姬',
-    'NIKKE',
-    '妮姬',
-    '我的英雄學院',
-    'My Hero Academia',
-    '葬送的芙莉蓮',
-    '芙莉蓮',
-    'frieren',
-    'Frieren',
-    '葬送',
-    '芙利蓮',
-    '烙印勇士',
-    'Berserk',
-    '納蘭詞',
-    '公仔',
-    '手辦',
-    '模型',
-    '組裝模型',
-    'PVC',
-    '可動完成品',
-    '景品',
-    '手機架',
-    '黏土人',
-    'Nendoroid',
-    'nendoroid',
-    'GK',
-    '拼圖模型',
-    '盒玩',
-    '掛軸',
-    'IC卡',
-    '靜態完成品',
-    '完成品',
-  ];
+// 使用 textProcessingService 中的函數
+const extractProductKeywords = textProcessingService.extractProductKeywords;
 
-  const patterns = [
-    /想買(.+?)(?:的|玩具|模型|商品|手辦|周邊|公仔|$)/g,
-    /想要(.+?)(?:的|玩具|模型|商品|手辦|周邊|公仔|$)/g,
-    /找(.+?)(?:的|玩具|模型|商品|手辦|周邊|公仔|$)/g,
-    /有沒有(.+?)(?:的|玩具|模型|商品|手辦|周邊|公仔|嗎|$)/g,
-    /有(.+?)(?:玩具|模型|商品|手辦|周邊|公仔|嗎|$)/g,
-    /喜歡(.+?)(?:的|玩具|模型|商品|手辦|周邊|公仔|$)/g,
-    /推薦(.+?)(?:的|玩具|模型|商品|手辦|周邊|公仔|$)/g,
-    /(.+?)商品/g,
-    /(.+?)系列/g,
-  ];
+// 使用 textProcessingService 中的函數
+const extractRequestedQuantity = textProcessingService.extractRequestedQuantity;
 
-  let keywords = [];
+// 使用 productSearchService 中的函數
+const searchProductsByName = productSearchService.searchProductsByName;
 
-  // 先檢查是否包含已知商品關鍵詞
-  for (const keyword of productKeywords) {
-    if (message.includes(keyword)) {
-      keywords.push(keyword);
-    }
-  }
-
-  // 如果沒找到已知關鍵詞，用模式匹配
-  if (keywords.length === 0) {
-    for (const pattern of patterns) {
-      const matches = [...message.matchAll(pattern)];
-      if (matches.length > 0) {
-        keywords = matches
-          .map((match) => {
-            let keyword = match[1].trim();
-            keyword = keyword.replace(/相關的?|類似的?|之類的?|等等?$/g, '').trim();
-            return keyword;
-          })
-          .filter((word) => word.length > 0)
-          .filter(
-            (word) =>
-              ![
-                '我',
-                '想',
-                '要',
-                '買',
-                '找',
-                '搜尋',
-                '搜索',
-                '查詢',
-                '有沒有',
-                '推薦',
-                '什麼',
-                '哪個',
-              ].includes(word)
-          );
-        if (keywords.length > 0) break;
-      }
-    }
-  }
-
-  // 最後備案：分詞提取
-  if (keywords.length === 0) {
-    const stopWords = [
-      '我',
-      '想',
-      '要',
-      '買',
-      '找',
-      '搜尋',
-      '搜索',
-      '查詢',
-      '有沒有',
-      '推薦',
-      '的',
-      '個',
-      '一',
-      '這',
-      '那',
-      '什麼',
-      '哪',
-      '裡',
-      '嗎',
-      '呢',
-      '啊',
-      '喔',
-      '哦',
-      '玩具',
-      '模型',
-      '商品',
-      '手辦',
-      '周邊',
-      '相關',
-      '類似',
-      '之類',
-      '等等',
-      '系列',
-      '有',
-      '請',
-      '給',
-      '幫',
-      '介紹',
-      '看看',
-    ];
-
-    // 更靈活的分詞提取
-    let words = message
-      .replace(/[，。！？、；：「」『』（）()]/g, ' ')
-      .split(/\s+/)
-      .filter((word) => word.length > 0 && !stopWords.includes(word));
-
-    // 如果有單字元詞彙，嘗試組合成更有意義的詞彙
-    if (words.some((word) => word.length === 1)) {
-      const combinedWords = [];
-      for (let i = 0; i < words.length; i++) {
-        const word = words[i];
-        if (word.length === 1 && i < words.length - 1) {
-          // 嘗試與下一個字組合
-          const combined = word + words[i + 1];
-          if (combined.length >= 2) {
-            combinedWords.push(combined);
-            i++; // 跳過下一個字
-            continue;
-          }
-        }
-        if (word.length > 1) {
-          combinedWords.push(word);
-        }
-      }
-      words = combinedWords;
-    }
-
-    keywords = words.filter((word) => word.length >= 1);
-  }
-
-  keywords = keywords.filter((keyword) => {
-    if (keyword === '獵人' || keyword.toLowerCase() === 'hunter') {
-      return false;
-    }
-    return true;
-  });
-
-  return keywords.slice(0, 3);
-};
-
-const extractRequestedQuantity = (message) => {
-  const quantityPatterns = [
-    /推薦(\d+)個/,
-    /要(\d+)個/,
-    /給我(\d+)個/,
-    /(\d+)個商品/,
-    /(\d+)樣商品/,
-    /(\d+)種商品/,
-    /推薦(.{1,3}?)個/,
-    /要(.{1,3}?)個/,
-    /給我(.{1,3}?)個/,
-  ];
-
-  const chineseNumbers = {
-    一: 1,
-    二: 2,
-    三: 3,
-    四: 4,
-    五: 5,
-    六: 6,
-    七: 7,
-    八: 8,
-    九: 9,
-    十: 10,
-    兩: 2,
-    幾: 3,
-  };
-
-  for (const pattern of quantityPatterns) {
-    const match = message.match(pattern);
-    if (match) {
-      const quantityStr = match[1];
-      if (/^\d+$/.test(quantityStr)) {
-        const num = parseInt(quantityStr);
-        return Math.min(Math.max(num, 1), 10);
-      }
-
-      if (chineseNumbers[quantityStr]) {
-        return chineseNumbers[quantityStr];
-      }
-    }
-  }
-
-  return 3; // 預設推薦3個
-};
-
-// 改進的商品搜尋功能
-const searchProductsByName = async (keyword) => {
+// 改進的商品搜尋功能 - 臨時保留這個函數，稍後會移除
+const searchProductsByNameOld = async (keyword) => {
   try {
     // 特殊處理：避免「獵人」單獨匹配到「魔物獵人」
     if (keyword === '獵人' || keyword.toLowerCase() === 'hunter') {
@@ -524,46 +245,7 @@ const searchProductsByName = async (keyword) => {
   }
 };
 
-const searchProductsByTags = async (keyword) => {
-  try {
-    const matchingTags = await db
-      .select()
-      .from(tagsTable)
-      .where(ilike(tagsTable.tagname, `%${keyword}%`));
-
-    if (matchingTags.length === 0) {
-      return [];
-    }
-
-    const tagIds = matchingTags.map((tag) => tag.id);
-    const productTagRelations = await db
-      .select()
-      .from(productTagSTable)
-      .where(inArray(productTagSTable.tagId, tagIds));
-
-    if (productTagRelations.length === 0) {
-      return [];
-    }
-
-    const productIds = productTagRelations.map((pt) => pt.productId);
-    const products = await db
-      .select()
-      .from(productsTable)
-      .where(
-        and(
-          eq(productsTable.isDeleted, false),
-          eq(productsTable.status, 'active'),
-          inArray(productsTable.id, productIds)
-        )
-      )
-      .limit(10);
-
-    return products;
-  } catch (error) {
-    console.error('搜尋商品標籤時發生錯誤:', error);
-    return [];
-  }
-};
+const searchProductsByTags = productSearchService.searchProductsByTags;
 
 const smartSearchProducts = async (message) => {
   const keywords = extractProductKeywords(message);
@@ -588,21 +270,8 @@ const smartSearchProducts = async (message) => {
   return [];
 };
 
-// 智能推薦功能
-const getRandomProductsFromDB = async () => {
-  try {
-    const products = await db
-      .select()
-      .from(productsTable)
-      .where(and(eq(productsTable.isDeleted, false), eq(productsTable.status, 'active')))
-      .limit(10);
-
-    return products;
-  } catch (error) {
-    console.error('獲取隨機商品時發生錯誤:', error);
-    return [];
-  }
-};
+// 使用 productSearchService 中的函數
+const getRandomProductsFromDB = productSearchService.getRandomProductsFromDB;
 
 const generateProductUrl = (productId) => {
   const frontendUrl = process.env.FRONTEND_URL || 'https://wanpai-frontend.zeabur.app';
@@ -614,57 +283,12 @@ const generateCategoryUrl = () => {
   return `${frontendUrl}/`;
 };
 
-const generateRandomRecommendation = async () => {
-  const products = await getRandomProductsFromDB();
-  const categoryUrl = generateCategoryUrl();
+const generateRandomRecommendation = recommendationService.generateRandomRecommendation;
 
-  if (products.length === 0) {
-    return `\n\n😅 抱歉，目前沒有可推薦的商品，請瀏覽我們的商品頁面。\n\n👉 <a href="${categoryUrl}" target="_blank" style="color: #007bff; text-decoration: none;">瀏覽所有商品</a>`;
-  }
-
-  const randomProducts = products.sort(() => 0.5 - Math.random()).slice(0, 3);
-
-  let recommendationText = '\n\n🎯 為您推薦：\n\n';
-
-  randomProducts.forEach((product) => {
-    const productUrl = generateProductUrl(product.id);
-    recommendationText += `🛍️ ${product.name}\n`;
-    recommendationText += `💰 價格：NT$ ${product.price}\n`;
-    if (product.description) {
-      recommendationText += `📝 ${product.description.substring(0, 50)}${product.description.length > 50 ? '...' : ''}\n`;
-    }
-    recommendationText += `👉 <a href="${productUrl}" target="_blank" style="color: #007bff; text-decoration: none; word-break: break-all;">查看詳情</a>\n\n`;
-  });
-
-  recommendationText += `🔍 <a href="${categoryUrl}" target="_blank" style="color: #007bff; text-decoration: none;">瀏覽更多商品</a>`;
-
-  return recommendationText;
-};
-
-// 對話延續功能
-const checkForProductRecommendationQuery = (message) => {
-  const recommendationPatterns = [
-    '推薦',
-    '介紹',
-    '建議',
-    '什麼好',
-    '有什麼',
-    '買什麼',
-    '選什麼',
-    '適合',
-    '喜歡',
-    '想要',
-    '想買',
-  ];
-
-  return recommendationPatterns.some((pattern) => message.includes(pattern));
-};
-
-const checkForDirectRecommendationQuery = (message) => {
-  const directPatterns = ['不知道要買什麼', '隨便推薦', '看看有什麼', '有什麼商品', '隨便看看'];
-
-  return directPatterns.some((pattern) => message.includes(pattern));
-};
+// 使用 textProcessingService 中的函數
+const checkForProductRecommendationQuery = textProcessingService.checkForProductRecommendationQuery;
+const checkForDirectRecommendationQuery = textProcessingService.checkForDirectRecommendationQuery;
+const checkForMoreProductsQuery = textProcessingService.checkForMoreProductsQuery;
 
 // 快速商品查詢函數
 const getProducts = async (query = null) => {
@@ -982,278 +606,16 @@ const generateRecommendation = async (searchResult) => {
 };
 
 // 智能搜尋邏輯
-// 智能標籤搜尋功能
-const searchByTagType = async (keyword, tagType) => {
-  try {
-    // 搜尋特定類型的標籤
-    const matchingTags = await db
-      .select()
-      .from(tagsTable)
-      .where(and(ilike(tagsTable.tagname, `%${keyword}%`), eq(tagsTable.type, tagType)));
+const searchByTagType = productSearchService.searchByTagType;
 
-    if (matchingTags.length === 0) return [];
+const fuzzySearchProducts = productSearchService.fuzzySearchProducts;
 
-    const tagIds = matchingTags.map((tag) => tag.id);
-    const productTagRelations = await db
-      .select()
-      .from(productTagSTable)
-      .where(inArray(productTagSTable.tagId, tagIds));
+const searchSeriesProducts = productSearchService.searchSeriesProducts;
 
-    if (productTagRelations.length === 0) return [];
+const smartSearch = smartSearchService.smartSearch;
 
-    const productIds = productTagRelations.map((pt) => pt.productId);
-    const products = await db
-      .select()
-      .from(productsTable)
-      .where(
-        and(
-          eq(productsTable.isDeleted, false),
-          eq(productsTable.status, 'active'),
-          inArray(productsTable.id, productIds)
-        )
-      )
-      .limit(10);
-
-    // 添加封面圖片
-    if (products.length > 0) {
-      const activeProductIds = products.map((p) => p.id);
-      const coverImages = await db
-        .select({ productId: productImagesTable.productId, imgUrl: productImagesTable.imgUrl })
-        .from(productImagesTable)
-        .where(
-          and(
-            inArray(productImagesTable.productId, activeProductIds),
-            eq(productImagesTable.isCover, true)
-          )
-        );
-
-      const coverMap = new Map(coverImages.map((img) => [img.productId, img.imgUrl]));
-      return products.map((p) => ({ ...p, coverImage: coverMap.get(p.id) || null }));
-    }
-
-    return products;
-  } catch (error) {
-    console.error(`搜尋${tagType}標籤時發生錯誤:`, error);
-    return [];
-  }
-};
-
-// 增強模糊搜尋功能（除了魔物獵人需要完整匹配）
-const fuzzySearchProducts = async (keywords) => {
-  try {
-    let allResults = new Map();
-
-    for (const keyword of keywords) {
-      if (keyword.includes('魔物獵人') || keyword.toLowerCase().includes('monster hunter')) {
-        const results = await db
-          .select()
-          .from(productsTable)
-          .where(
-            and(
-              eq(productsTable.isDeleted, false),
-              eq(productsTable.status, 'active'),
-              or(
-                ilike(productsTable.name, '%魔物獵人%'),
-                ilike(productsTable.name, '%Monster Hunter%'),
-                ilike(productsTable.name, '%MonsterHunter%')
-              )
-            )
-          )
-          .limit(15);
-        results.forEach((product) => {
-          allResults.set(product.id, product);
-        });
-      } else {
-        let searchQueries = [];
-        searchQueries.push(
-          db
-            .select()
-            .from(productsTable)
-            .where(
-              and(
-                eq(productsTable.isDeleted, false),
-                eq(productsTable.status, 'active'),
-                ilike(productsTable.name, `%${keyword}%`)
-              )
-            )
-            .limit(15)
-        );
-        if (keyword.length >= 2) {
-          searchQueries.push(
-            db
-              .select()
-              .from(productsTable)
-              .where(
-                and(
-                  eq(productsTable.isDeleted, false),
-                  eq(productsTable.status, 'active'),
-                  ilike(productsTable.name, `${keyword}%`)
-                )
-              )
-              .limit(10)
-          );
-          searchQueries.push(
-            db
-              .select()
-              .from(productsTable)
-              .where(
-                and(
-                  eq(productsTable.isDeleted, false),
-                  eq(productsTable.status, 'active'),
-                  ilike(productsTable.sku, `%${keyword}%`)
-                )
-              )
-              .limit(5)
-          );
-        }
-        if (keyword.length >= 3) {
-          searchQueries.push(
-            db
-              .select()
-              .from(productsTable)
-              .where(
-                and(
-                  eq(productsTable.isDeleted, false),
-                  eq(productsTable.status, 'active'),
-                  ilike(productsTable.description, `%${keyword}%`)
-                )
-              )
-              .limit(8)
-          );
-        }
-        for (const query of searchQueries) {
-          try {
-            const results = await query;
-            results.forEach((product) => {
-              allResults.set(product.id, product);
-            });
-          } catch (queryError) {}
-        }
-      }
-    }
-
-    const products = Array.from(allResults.values());
-
-    if (products.length > 0) {
-      const productIds = products.map((p) => p.id);
-      const coverImages = await db
-        .select({ productId: productImagesTable.productId, imgUrl: productImagesTable.imgUrl })
-        .from(productImagesTable)
-        .where(
-          and(
-            inArray(productImagesTable.productId, productIds),
-            eq(productImagesTable.isCover, true)
-          )
-        );
-
-      const coverMap = new Map(coverImages.map((img) => [img.productId, img.imgUrl]));
-      const productsWithCovers = products.map((p) => ({
-        ...p,
-        coverImage: coverMap.get(p.id) || null,
-      }));
-
-      console.log('模糊搜尋完成，已添加封面圖片');
-      return productsWithCovers;
-    }
-
-    return products;
-  } catch (error) {
-    console.error('模糊搜尋商品時發生錯誤:', error);
-    return [];
-  }
-};
-
-// 系列商品隨機推薦功能
-const searchSeriesProducts = async (seriesKeyword, requestedQuantity = 3) => {
-  try {
-    const seriesMapping = {
-      組裝模型: ['組裝模型'],
-      PVC: ['PVC'],
-      可動完成品: ['可動完成品'],
-      景品: ['景品'],
-      手機架: ['手機架'],
-      黏土人: ['黏土人'],
-      GK: ['GK'],
-      拼圖模型: ['拼圖模型'],
-      盒玩: ['盒玩'],
-      掛軸: ['掛軸'],
-      IC卡: ['IC卡'],
-      靜態完成品: ['靜態完成品'],
-      模型: ['組裝模型', '拼圖模型'],
-      完成品: ['可動完成品', '靜態完成品'],
-      Nendoroid: ['黏土人'],
-      nendoroid: ['黏土人'],
-    };
-
-    let tagNames = seriesMapping[seriesKeyword] || [seriesKeyword];
-
-    if (tagNames.length === 0) {
-      return [];
-    }
-
-    const matchingTags = await db
-      .select()
-      .from(tagsTable)
-      .where(
-        and(
-          eq(tagsTable.type, 'series'),
-          or(...tagNames.map((name) => eq(tagsTable.tagname, name)))
-        )
-      );
-
-    if (matchingTags.length === 0) {
-      return [];
-    }
-
-    const tagIds = matchingTags.map((tag) => tag.id);
-    const productTagRelations = await db
-      .select()
-      .from(productTagSTable)
-      .where(inArray(productTagSTable.tagId, tagIds));
-
-    if (productTagRelations.length === 0) {
-      return [];
-    }
-
-    const productIds = productTagRelations.map((pt) => pt.productId);
-    const allProducts = await db
-      .select()
-      .from(productsTable)
-      .where(
-        and(
-          eq(productsTable.isDeleted, false),
-          eq(productsTable.status, 'active'),
-          inArray(productsTable.id, productIds)
-        )
-      );
-
-    if (allProducts.length === 0) return [];
-    const shuffled = allProducts.sort(() => 0.5 - Math.random());
-    const selectedProducts = shuffled.slice(0, Math.min(requestedQuantity, allProducts.length));
-    const productIds_final = selectedProducts.map((p) => p.id);
-    const coverImages = await db
-      .select({ productId: productImagesTable.productId, imgUrl: productImagesTable.imgUrl })
-      .from(productImagesTable)
-      .where(
-        and(
-          inArray(productImagesTable.productId, productIds_final),
-          eq(productImagesTable.isCover, true)
-        )
-      );
-
-    const coverMap = new Map(coverImages.map((img) => [img.productId, img.imgUrl]));
-    const productsWithCovers = selectedProducts.map((p) => ({
-      ...p,
-      coverImage: coverMap.get(p.id) || null,
-    }));
-
-    return productsWithCovers;
-  } catch (error) {
-    return [];
-  }
-};
-
-const smartSearch = async (message, requestedQuantity = 3) => {
+// 移除重複的 smartSearch 實現
+const smartSearchOld = async (message, requestedQuantity = 3) => {
   const keywords = extractProductKeywords(message);
 
   let products = [];
@@ -1399,19 +761,69 @@ exports.chat = async (req, res) => {
 
     // 檢查是否為商品相關查詢（根據實際商品調整關鍵詞）
     const isProductQuery =
-      /商品|產品|推薦|購買|價格|有什麼|想要|需要|找|搜尋|公仔|手辦|模型|玩具|鋼彈|變形金剛|河馬|無職轉生|遊戲王|數碼寶貝|初音未來|假面騎士|哥吉拉|精靈寶可夢|overlord|魔物獵人|葬送|芙莉蓮|烙印勇士|孤獨搖滾|狼與辛香料|蔚藍檔案|超人力霸王|犬夜叉|莉可麗絲|魔神|女神異聞錄|史努比|崩壞|星穹鐵道|熊熊遇見你|瑞克和莫蒂|探險活寶|hololive|夢想成為魔法少女|環太平洋|絕區零|物語系列|妮姬|我的英雄學院|厲陰宅|牠|組裝模型|PVC|可動完成品|景品|手機架|黏土人|GK|拼圖模型|盒玩|掛軸|IC卡|靜態完成品|完成品|Nendoroid/.test(
+      /商品|產品|推薦|購買|價格|有什麼|想要|需要|找|搜尋|公仔|手辦|模型|玩具|鋼彈|變形金剛|河馬|無職轉生|遊戲王|數碼寶貝|初音未來|假面騎士|哥吉拉|精靈寶可夢|overlord|魔物獵人|葬送|芙莉蓮|烙印勇士|孤獨搖滾|狼與辛香料|蔚藍檔案|超人力霸王|犬夜叉|莉可麗絲|魔神|女神異聞錄|史努比|崩壞|星穹鐵道|熊熊遇見你|瑞克和莫蒂|探險活寶|hololive|夢想成為魔法少女|環太平洋|絕區零|物語系列|妮姬|我的英雄學院|厲陰宅|牠|組裝模型|PVC|可動完成品|景品|手機架|黏土人|GK|拼圖模型|盒玩|掛軸|IC卡|靜態完成品|完成品|Nendoroid|青島|AOSHIMA|BellFine|TAITO|Good Smile|BANDAI|MegaHouse|KAIYODO|TAKARATOMY|FURYU|Threezero|TOHO|Kotobukiya|RIBOSE|CAPCOM|Design|BANPRESTO|野獸國|MINIGT|QuesQ|Max Factory|BearPanda|Infinity Studio|KADOKAWA|JXK|PROOF|豐田|Toyota|一番賞|PLEX|Re-ment|一卡通|HIROKAWA|Animester/.test(
         message
       );
 
-    // 特殊處理：當用戶問一般性商品問題時，觸發隨機推薦
+    // 檢查是否有推薦意圖
+    const hasRecommendationIntent = checkForProductRecommendationQuery(message);
+
+    // 檢查是否為要求更多商品的查詢
+    const isRequestingMoreProducts = checkForMoreProductsQuery(message);
+
+    // 檢查是否為純一般性商品查詢（沒有特定商品關鍵詞）
+    const keywords = extractProductKeywords(message);
+    const hasSpecificProduct = keywords.length > 0;
+
+    // 特殊處理：當用戶問一般性商品問題且沒有特定商品需求時，觸發隨機推薦
     const isGeneralProductQuery =
-      /有什麼商品|什麼商品|推薦商品|有哪些|推薦什麼|有什麼可以|商品推薦/.test(message);
+      /有什麼商品|什麼商品|推薦商品|有哪些|推薦什麼|有什麼可以|商品推薦/.test(message) &&
+      !hasSpecificProduct;
 
     const requestedQuantity = extractRequestedQuantity(message);
 
     let productInfo = '';
 
-    if (isGeneralProductQuery) {
+    // 優化邏輯順序：優先處理具體商品查詢
+    if (isRequestingMoreProducts) {
+      // 要求更多商品：直接隨機推薦，不考慮歷史關鍵詞
+      const allProducts = await getProducts();
+      if (allProducts.length > 0) {
+        const shuffled = allProducts.sort(() => 0.5 - Math.random());
+        const randomProducts = shuffled.slice(0, Math.min(requestedQuantity, allProducts.length));
+
+        // 添加封面圖片
+        const productIds = randomProducts.map((p) => p.id);
+        const coverImages = await db
+          .select({ productId: productImagesTable.productId, imgUrl: productImagesTable.imgUrl })
+          .from(productImagesTable)
+          .where(
+            and(
+              inArray(productImagesTable.productId, productIds),
+              eq(productImagesTable.isCover, true)
+            )
+          );
+
+        const coverMap = new Map(coverImages.map((img) => [img.productId, img.imgUrl]));
+        const productsWithCovers = randomProducts.map((p) => ({
+          ...p,
+          coverImage: coverMap.get(p.id) || null,
+        }));
+
+        const searchResult = {
+          products: productsWithCovers,
+          searchType: 'random',
+          searchKeyword: '更多商品',
+          requestedQuantity,
+        };
+        productInfo = await generateRecommendation(searchResult);
+      }
+    } else if (hasSpecificProduct || isProductQuery) {
+      // 有特定商品查詢或是商品相關查詢：直接搜尋
+      const searchResult = await smartSearch(message, requestedQuantity);
+      productInfo = await generateRecommendation(searchResult);
+    } else if (hasRecommendationIntent || isGeneralProductQuery) {
+      // 有推薦意圖但沒有特定商品：隨機推薦
       const allProducts = await getProducts();
       if (allProducts.length > 0) {
         const shuffled = allProducts.sort(() => 0.5 - Math.random());
@@ -1463,20 +875,23 @@ exports.chat = async (req, res) => {
       }
     }
 
-    if (isProductQuery) {
-      const searchResult = await smartSearch(message, requestedQuantity);
-      productInfo = await generateRecommendation(searchResult);
-    }
-
     let searchInfo = '';
     let hasFoundProducts = false;
 
-    if ((isProductQuery || isGeneralProductQuery) && productInfo) {
-      if (
+    if (
+      (isProductQuery || isGeneralProductQuery || isRequestingMoreProducts || hasSpecificProduct) &&
+      productInfo
+    ) {
+      if (isRequestingMoreProducts) {
+        hasFoundProducts = true;
+        searchInfo =
+          '\n\n【重要】：客戶要求更多商品，系統提供了新的商品推薦，請表達為客戶推薦更多商品選擇。';
+      } else if (
         productInfo.includes('🎯 找到與') ||
         productInfo.includes('🎯 找到 IP系列') ||
         productInfo.includes('🏭 找到 品牌') ||
-        productInfo.includes('📺 找到 系列')
+        productInfo.includes('📺 找到 系列') ||
+        productInfo.includes('🏷️ 找到「')
       ) {
         hasFoundProducts = true;
         searchInfo = '\n\n【重要】：系統成功找到了相關商品，請簡單確認找到商品即可，不要說推薦。';
@@ -1486,6 +901,9 @@ exports.chat = async (req, res) => {
       ) {
         hasFoundProducts = true;
         searchInfo = '\n\n【重要】：系統提供了熱門商品推薦，請表達為客戶推薦商品，不要說沒有找到。';
+      } else if (productInfo.includes('🎲 為您推薦「')) {
+        hasFoundProducts = true;
+        searchInfo = '\n\n【重要】：系統找到了系列商品並提供推薦，請表達找到相關系列商品。';
       } else {
         hasFoundProducts = true;
         searchInfo = '\n\n【重要】：系統提供了其他推薦商品，請表達為客戶推薦其他商品。';
@@ -1493,6 +911,11 @@ exports.chat = async (req, res) => {
     }
 
     const prompt = `你是玩派玩具店的專業客服，專門幫助客戶找到他們想要的模型玩具。
+
+【語言要求 - 最重要】：
+- 必須使用正體中文（繁體中文）回應
+- 絕對禁止使用簡體字，例如：不能用「查看」要用「檢視」、不能用「动漫」要用「動漫」
+- 所有回應必須符合台灣用語習慣
 
 【標籤系統理解】：
 我們的商品按照三種標籤分類：
@@ -1504,7 +927,7 @@ exports.chat = async (req, res) => {
 當客戶詢問「組裝模型」「PVC」「景品」「黏土人」「可動完成品」等系列時，系統會自動推薦該系列的精選商品。
 
 【絕對禁止事項】：
-1. 嚴禁使用任何簡體字
+1. 【最嚴重違規】絕對嚴禁使用任何簡體字或大陸用語
 2. 絕對不要編造任何商品資訊、系列名稱、公司名稱
 3. 禁止提及我們沒有的商品系列（如：航海王、火影忍者、七龍珠、海賊王、死神、MG、RG、PG、HG等級別分類）
 4. 禁止描述具體的商品功能、特色或規格
@@ -1514,31 +937,41 @@ exports.chat = async (req, res) => {
 8. 不要在AI回應中重複顯示商品推薦，因為系統會自動添加商品清單
 9. 【重要】絕對禁止提及任何具體的動漫作品名稱，只能說「相關商品」或「熱門商品」
 
+【正體中文用詞規範】：
+- 使用「檢視」而非「查看」
+- 使用「動漫」而非「动漫」
+- 使用「資訊」而非「信息」
+- 使用「軟體」而非「软件」
+- 使用「網站」而非「网站」
+- 使用「聯繫」而非「联系」
+
 【必須遵守】：
 1. AI回應要簡潔自然，不要提及商品清單或連結
 2. 系統會自動在AI回應後添加相關商品推薦
 3. 根據搜尋結果回應：
    - 如果系統找到商品：表達找到了相關商品，不要說沒有
    - 如果系統沒找到：才說沒有找到，並建議其他選擇
-4. 使用繁體中文回應
+4. 【強制要求】使用正體中文（繁體中文）回應，符合台灣用語習慣
 5. 不要在回應中重複說明商品內容，因為下方會有詳細商品資訊
 
 【回應格式】：
 ${
   hasFoundProducts
-    ? productInfo &&
-      (productInfo.includes('🎯 為您推薦我們店內的熱門商品') ||
-        productInfo.includes('🎯 為您推薦熱門商品'))
-      ? '- 熱門商品推薦時：請說"為您推薦熱門商品"'
-      : productInfo && productInfo.includes('🎲 為您推薦「')
-        ? '- 系列商品推薦時：請說"這個系列有很多精選商品，為您推薦幾款"'
-        : productInfo &&
-            (productInfo.includes('🎯 找到與') ||
-              productInfo.includes('🎯 找到 IP系列') ||
-              productInfo.includes('🏭 找到 品牌') ||
-              productInfo.includes('📺 找到 系列'))
-          ? '- 找到特定商品時：簡單確認即可，如"找到相關商品"'
-          : '- 沒找到特定商品但有推薦時：說"很抱歉沒有找到特定商品，不過為您推薦其他商品"'
+    ? isRequestingMoreProducts
+      ? '- 要求更多商品時：請說"當然！為您推薦更多精選商品"或"還有這些商品供您參考"'
+      : productInfo &&
+          (productInfo.includes('🎯 為您推薦我們店內的熱門商品') ||
+            productInfo.includes('🎯 為您推薦熱門商品'))
+        ? '- 熱門商品推薦時：請說"為您推薦熱門商品"'
+        : productInfo && productInfo.includes('🎲 為您推薦「')
+          ? '- 系列商品推薦時：請說"這個系列有很多精選商品，為您推薦幾款"'
+          : productInfo &&
+              (productInfo.includes('🎯 找到與') ||
+                productInfo.includes('🎯 找到 IP系列') ||
+                productInfo.includes('🏭 找到 品牌') ||
+                productInfo.includes('📺 找到 系列'))
+            ? '- 找到特定商品時：簡單確認即可，如"找到相關商品"'
+            : '- 沒找到特定商品但有推薦時：說"很抱歉沒有找到特定商品，不過為您推薦其他商品"'
     : '- 完全沒找到時：說"很抱歉沒有找到相關商品，請您瀏覽其他商品"'
 }
 - 不要提及連結、清單或具體商品名稱
@@ -1548,8 +981,22 @@ ${
     const response = await result.response;
     let aiResponse = response.text();
 
+    // 分別處理AI回應和商品信息的換行符轉換
     const formattedText = aiResponse.replace(/\n/g, '<br>');
-    const finalResponse = formattedText + (productInfo ? productInfo.replace(/\n/g, '<br>') : '');
+
+    // 對商品信息進行特殊處理，避免破壞HTML標籤
+    let formattedProductInfo = '';
+    if (productInfo) {
+      // 先保護HTML標籤，然後轉換換行符
+      formattedProductInfo = productInfo
+        .replace(/<a\s+[^>]*href="[^"]*"[^>]*>.*?<\/a>/g, (match) => {
+          // 保護a標籤不被換行符影響
+          return match.replace(/\n/g, '');
+        })
+        .replace(/\n/g, '<br>');
+    }
+
+    const finalResponse = formattedText + formattedProductInfo;
 
     res.json({ reply: finalResponse });
   } catch (error) {

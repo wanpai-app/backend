@@ -11,10 +11,8 @@ const generateRecommendation = async (searchResult) => {
 
   let recommendationText = '';
 
-  
   const isGeneralQuery = ['商品', '產品', '玩具', '模型', '手辦', '公仔'].includes(searchKeyword);
 
-  
   switch (searchType) {
     case 'ip':
       recommendationText = `\n\n🎯 找到 ${searchTypeDisplay}「${searchKeyword}」的商品：\n\n`;
@@ -71,7 +69,7 @@ const generateRecommendation = async (searchResult) => {
       }
     }
 
-    recommendationText += `🔗 <a href="${productUrl}" target="_blank" style="color: #007bff; text-decoration: none; word-break: break-all;">查看詳情</a>\n`;
+    recommendationText += `🔗 <a href="${productUrl}" target="_blank" style="color: #007bff; text-decoration: none; word-break: break-all;">檢視詳情</a>\n`;
     recommendationText += '\n';
   });
 
