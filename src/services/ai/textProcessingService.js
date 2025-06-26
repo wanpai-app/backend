@@ -5,395 +5,193 @@
 const extractProductKeywords = (message) => {
   let keywords = [];
 
-  // 系列相關關鍵詞（最高優先序）
-  const seriesKeywords = [
-    '組裝模型',
-    'PVC',
-    '可動完成品',
-    '景品',
-    '黏土人',
-    'GK',
-    '鋼彈',
-    '高達',
-    'GUNDAM',
-    'gundam',
-    'Gundam',
-    '變形金剛',
-    'Transformer',
-    '無職轉生',
-    '遊戲王',
-    'Yu-Gi-Oh',
-    '百獸王',
-    'GOLION',
-    '百獸王GOLION',
-    '河馬',
-    'hippo',
-    '閃電霹靂車',
-    '數碼寶貝',
-    'Digimon',
-    '藍寶堅尼',
-    'Lamborghini',
-    '孤獨搖滾',
-    '狼與辛香料',
-    '魔物獵人',
-    'Monster Hunter',
-    'MonsterHunter',
-    'Overlord',
-    'overlord',
-    '魔女之旅',
-    '不時輕聲地以俄語遮羞的鄰座艾莉同學',
-    '初音未來',
-    'Hatsune Miku',
-    'Miku',
-    '假面騎士',
-    'Kamen Rider',
-    '約會大作戰',
-    'Date A Live',
-    '蔚藍檔案',
-    'Blue Archive',
-    '超人力霸王',
-    'Ultraman',
-    '犬夜叉',
-    'Inuyasha',
-    '莉可麗絲',
-    'LycoReco',
-    '哥吉拉',
-    'Godzilla',
-    '月刊少女野崎同學',
-    '野崎同學',
-    'hololive',
-    '探險活寶',
-    'Adventure Time',
-    '瑞克和莫蒂',
-    'Rick and Morty',
-    '熊熊遇見你',
-    'We Bare Bears',
-    '崩壞:星穹鐵道',
-    '星穹鐵道',
-    'Honkai Star Rail',
-    '史努比',
-    'Snoopy',
-    '精靈寶可夢',
-    'Pokemon',
-    '寶可夢',
-    '皮卡丘',
-    '我的英雄學院',
-    '綠谷出久',
-    '爆豪勝己',
-  ];
+  // 關鍵詞映射表 - 基於實際資料庫中的商品和標籤
+  const keywordMapping = {
+    // === 系列類型 (SERIES) ===
+    組裝模型: ['組裝模型', '模型', '拼裝', '拼組'],
+    PVC: ['PVC', 'pvc', '完成品', '公仔'],
+    可動完成品: ['可動', '可動完成品', '可動模型', 'figma', 'Figma'],
+    景品: ['景品', '一番賞', '盒玩', 'COREFUL', 'TENITOL'],
+    黏土人: ['黏土人', 'nendoroid', 'Nendoroid', '點黏土'],
+    GK: ['GK', 'gk', '樹脂', '限定', 'Resin'],
+    拼圖模型: ['拼圖模型', '金屬拼圖', '金屬Nano'],
+    手機架: ['手機架', 'DESKTOP MONSTER'],
+    掛軸: ['掛軸', '藝術掛軸'],
+    IC卡: ['IC卡', '一卡通', '卡片'],
+    靜態完成品: ['靜態完成品', '靜態'],
+    盒玩: ['盒玩', '食玩', '小盒玩'],
 
-  // 檢查系列關鍵詞
-  for (const keyword of seriesKeywords) {
-    if (message.includes(keyword)) {
-      keywords.push(keyword);
-      break; // 找到一個系列關鍵詞就足夠了
-    }
-  }
-
-  // 如果沒有找到系列關鍵詞，繼續其他搜尋邏輯
-  if (keywords.length === 0) {
-    // IP相關關鍵詞（只包含實際存在的商品）
-    const ipKeywords = [
-      '狼與辛香料',
-      '蔚藍檔案',
-      'Blue Archive',
-      '超人力霸王',
-      'Ultraman',
-      '莉可麗絲',
-      'LycoReco',
-      '哥吉拉',
-      'Godzilla',
-      'Overlord',
-      'overlord',
-      '魔女之旅',
-      '犬夜叉',
-      'Inuyasha',
-      '月刊少女野崎同學',
-      '野崎同學',
-      'hololive',
+    // === IP 作品 ===
+    變形金剛: ['變形金剛', 'Transformer', 'TRANSFORMERS', 'SYNERGENEX'],
+    '無職轉生～到了異世界就拿出真本事～': ['無職轉生', 'Melty Princess', '洛琪希', '希露菲葉特'],
+    遊戲王: ['遊戲王', 'Yu-Gi-Oh', '混沌士兵'],
+    百獸王GOLION: ['百獸王GOLION', '百獸王', 'GOLION', '五獅合體', '聖戰士'],
+    河馬: ['河馬', '侏儒河馬', '巨大侏儒河馬'],
+    閃電霹靂車: ['閃電霹靂車', '阿斯拉', 'EX史培利昂'],
+    數碼寶貝: ['數碼寶貝', 'Digimon', '機械暴龍獸'],
+    藍寶堅尼Aventador: ['藍寶堅尼Aventador', 'Lamborghini Aventador', 'Aventador'],
+    'R35 GT-R': ['R35 GT-R', 'GT-R', 'GTR', 'Skyline'],
+    KENMARY: ['KENMARY WORKS', 'KENMARY'],
+    藍寶堅尼Huracan: ['藍寶堅尼Huracan', 'Lamborghini Huracan', 'Huracan'],
+    'VERTEX JZS161 Aristo': ['VERTEX', 'JZS161', 'Aristo'],
+    RE雨宮: ['RE雨宮', 'FD3SRX-7'],
+    'Secret BNR34 Skyline GT-R': ['Top Secret', 'BNR34', 'Secret'],
+    'Greddy&Rocket Bunny Enkei': ['Greddy', 'Rocket Bunny', 'Enkei', 'ZN6 86'],
+    福斯金龜車: ['福斯金龜車', '金龜車', 'Volkswagen', '福斯'],
+    孤獨搖滾: ['孤獨搖滾', '孤獨搖滾！', '後藤一里', '廣井菊理'],
+    魔物獵人: ['魔物獵人', 'Monster Hunter', 'MonsterHunter', '荒野', '雄火龍大劍'],
+    狼與辛香料: ['狼與辛香料', '赫蘿', '兔女郎'],
+    Overlord: ['Overlord', 'overlord', '雅兒貝德', '旗袍'],
+    魔女之旅: ['魔女之旅', '伊蕾娜', '甜蜜惡魔', '襯衫'],
+    不時輕聲地以俄語遮羞的鄰座艾莉同學: [
       '不時輕聲地以俄語遮羞的鄰座艾莉同學',
       '艾莉同學',
-      '百獸王',
-      'GOLION',
-      '無職轉生',
-      '河馬',
-      'hippo',
-      '閃電霹靂車',
-      '數碼寶貝',
-      'Digimon',
-      '藍寶堅尼',
-      'Lamborghini',
-      '遊戲王',
-      'Yu-Gi-Oh',
-      '魔物獵人',
-      'Monster Hunter',
-      'MonsterHunter',
-      '初音未來',
-      'Hatsune Miku',
-      'Miku',
-      '假面騎士',
-      'Kamen Rider',
-      '約會大作戰',
-      'Date A Live',
-      '孤獨搖滾',
-      '探險活寶',
-      'Adventure Time',
-      '瑞克和莫蒂',
-      'Rick and Morty',
-      '熊熊遇見你',
-      'We Bare Bears',
-      '崩壞:星穹鐵道',
-      '星穹鐵道',
-      'Honkai Star Rail',
-      '史努比',
-      'Snoopy',
+      '艾莉',
+      '制服',
+    ],
+    初音未來: ['初音未來', 'Miku', 'Hatsune Miku', '生日', '十面埋伏'],
+    假面騎士: ['假面騎士', 'Kamen Rider', 'Build', '齊魯巴蜘蛛', '肌肉銀河滿瓶'],
+    約會大作戰: ['約會大作戰', 'Date A Live', '時崎狂三', '四糸乃', '貓耳女僕'],
+    PANDEM: ['PANDEM', 'Yaris Mooneyes'],
+    蔚藍檔案: ['蔚藍檔案', 'Blue Archive', '佳世子', '正月'],
+    超人力霸王: ['超人力霸王', 'Ultraman', '迪卡', '複合型態'],
+    犬夜叉: ['犬夜叉', 'Inuyasha', '殺生丸'],
+    '3式機龍': ['3式機龍', '機龍', '重武装型', '高機動型'],
+    車庫拍攝: ['車庫拍攝', '三人套組'],
+    莉可麗絲: ['莉可麗絲', '井之上瀧奈', '錦木千束', '白洋裝'],
+    哥吉拉: [
+      '哥吉拉',
+      'Godzilla',
+      '機械王者基多拉',
+      '王者基多拉',
+      '碧奧蘭蒂',
+      '正宗哥吉拉',
+      '熱線放射',
+    ],
+    魔神Z: ['魔神Z', 'Grendizer U', '金剛戰神U'],
+    女神異聞錄: ['女神異聞錄', 'Persona', 'P3R', '主角'],
+    精靈寶可夢: [
       '精靈寶可夢',
       'Pokemon',
       '寶可夢',
-      '皮卡丘',
-      '我的英雄學院',
-    ];
+      'NEON PARTY',
+      'Little Night',
+      '草苗龜',
+      '波加曼',
+      '波皇子',
+    ],
+    史努比: ['史努比', 'Snoopy', '藝術裝飾框', '美式甜點店'],
+    超力戰隊王連者: ['超力戰隊王連者', 'POWER BRACE', '三十週年'],
+    '崩壞:星穹鐵道': [
+      '崩壞:星穹鐵道',
+      '星穹鐵道',
+      'Honkai Star Rail',
+      '景元',
+      '彦卿',
+      '桑博',
+      '花火',
+      '無名客的獎章',
+    ],
+    熊熊遇見你: ['熊熊遇見你', 'We Bare Bears', '自拍', '派對', '甜甜圈', '飄飄玩', '逗趣', '歡樂'],
+    瑞克和莫蒂: ['瑞克和莫蒂', 'Rick and Morty', 'science', 'risk', '酸黃瓜瑞克'],
+    探險活寶: ['探險活寶', 'Adventure Time', '阿寶', '老皮', '嗶莫', '檸檬公爵'],
+    IRENA: ['IRENA', 'GUWEIZ'],
+    '魅魔 風紀委員': ['魅魔', '風紀委員', '澪奈'],
+    月刊少女野崎同學: ['月刊少女野崎同學', '野崎同學', '佐倉千代', '御子柴實琴'],
+    hololive: ['hololive', 'Mococo', 'Fuwawa', '阿比斯加德', 'AXGRIT'],
+    夢想成為魔法少女: ['夢想成為魔法少女', '瑪吉雅硫磺'],
+    鋼彈: ['鋼彈', 'Gundam', 'CONVERGE CORE', 'GQuuuuuuX', '紅色鋼彈'],
+    納蘭詞: ['納蘭詞', 'Biya'],
+    環太平洋: ['環太平洋', '吉普賽危機', '重機形'],
+    虎甲人: ['虎甲人'],
+    倒牛奶的女僕: ['倒牛奶的女僕', '維梅爾'],
+    絕區零: ['絕區零', '馮·萊卡恩'],
+    物語系列: ['物語系列', '忍野忍', 'TRICK OR TREAT'],
+    '勝利女神：妮姬': ['勝利女神：妮姬', '勝利女神', '妮姬', 'NIKKE', '阿妮斯', '拉毗'],
+    我的英雄學院: ['我的英雄學院', '奮進人'],
+    厲陰宅: ['厲陰宅', '安娜貝爾', 'Annabelle'],
+    牠: ['牠', '潘尼懷斯', 'Pennywise'],
+    葬送的芙莉蓮: ['葬送的芙莉蓮', '芙莉蓮'],
+    '藍寶堅尼 Lamborghini Huracán': [
+      '藍寶堅尼 Huracán',
+      'Lamborghini Huracán',
+      'GT3 EVO2',
+      'Forte Racing',
+    ],
+    '福斯 Volkswagen': ['福斯 Volkswagen', 'ID.Buzz', 'Candy White', 'Energetic Orange'],
+    '日產 Nissan LB-ER34': ['日產 Nissan LB-ER34', 'LB-ER34', 'Super Silhouette'],
+    '布加迪 Bugatti W16': ['布加迪 Bugatti W16', 'W16 Mistral'],
+    '馬自達 Mazda RX-7': ['馬自達 Mazda RX-7', 'RX-7', 'VeilSide Fortune'],
+    '本田 Honda VEZEL': [
+      '本田 Honda VEZEL',
+      'VEZEL',
+      'HR-V',
+      '午夜金屬藍',
+      '珍珠黑',
+      '金屬灰',
+      '白金珍珠白',
+      '日光珍珠白',
+    ],
+    烙印勇士: ['烙印勇士', '骷髏騎士'],
 
-    // 品牌關鍵詞
-    const brandKeywords = [
-      'GSC',
-      'Good Smile Company',
-      'Kotobukiya',
-      '壽屋',
-      'Bandai',
-      '萬代',
-      'Figma',
-      'Nendoroid',
-      'Hot Toys',
-      'Prime 1 Studio',
-      'Sideshow',
-      'Threezero',
-      'Medicom',
-      'Square Enix',
-      'TAITO',
-      'BellFine',
-      'Furyu',
-      'PROOF',
-      'Max Factory',
-      'QuesQ',
-      'MEGAHOUSE',
-      'AOSHIMA',
-      '青島',
-      'KAIYODO',
-      '海洋堂',
-    ];
+    // === 品牌 (BRAND) ===
+    TAKARATOMY: ['TAKARATOMY', 'TOMY', 'T-SPARK'],
+    MegaHouse: ['MegaHouse', 'MEGAHOUSE', 'Melty Princess'],
+    KAIYODO: ['KAIYODO', '海洋堂', 'REVOLTECH'],
+    'Good Smile': ['Good Smile', 'GSC', 'Good Smile Company', 'MODEROID', 'POP UP PARADE', 'figma'],
+    JXK: ['JXK'],
+    BANDAI: ['BANDAI', '萬代', 'X-PLUS', 'DefoReal', 'FW'],
+    'AOSHIMA 青島': ['AOSHIMA', '青島', 'AOSHIMA 青島', '樂Pla Snap Kit'],
+    PROOF: ['PROOF'],
+    'SK JAPAN': ['SK JAPAN'],
+    TAITO: ['TAITO', 'Coreful Figure', 'AMP+ Figure'],
+    '豐田 Toyota': ['豐田', 'Toyota'],
+    FURYU: ['FURYU', 'F:NEX', 'TENITOL TALL'],
+    Threezero: ['Threezero', 'FigZero'],
+    TOHO: ['TOHO', '東寶', 'DESKTOP MONSTER'],
+    'WT Minifactory': ['WT Minifactory'],
+    BellFine: ['BellFine', 'bellfine', 'Bell Fine'],
+    一番賞: ['一番賞'],
+    PLEX: ['PLEX', '金屬Nano'],
+    Kotobukiya: ['Kotobukiya', '壽屋', '極獸造型'],
+    'Re-ment': ['Re-ment'],
+    RIBOSE: ['RIBOSE', '核糖文化'],
+    CAPCOM: ['CAPCOM'],
+    一卡通: ['一卡通'],
+    HIROKAWA: ['HIROKAWA', 'G.A.F.C.系列'],
+    Animester: ['Animester', '大漫匠'],
+    Design: ['Design', 'COCO'],
+    BANPRESTO: ['BANPRESTO', 'THE AMAZING HEROES PLUS'],
+    野獸國: ['野獸國', 'Beast Kingdom'],
+    MINIGT: ['MINIGT'],
+    'Hobby JAPAN': ['Hobby JAPAN'],
+    QuesQ: ['QuesQ'],
+    'Max Factory': ['Max Factory'],
+    BearPanda: ['BearPanda'],
+    'Infinity Studio': ['Infinity Studio', '重機形'],
+    KADOKAWA: ['KADOKAWA', 'KDcolle'],
+  };
 
-    // 依序檢查不同類型的關鍵詞
-    const allKeywordSets = [
-      { keywords: ipKeywords, type: 'ip' },
-      { keywords: brandKeywords, type: 'brand' },
-    ];
+  // 搜尋邏輯：優先匹配更具體的關鍵詞
+  const allMappings = Object.entries(keywordMapping);
 
-    for (const keywordSet of allKeywordSets) {
-      for (const keyword of keywordSet.keywords) {
-        if (message.includes(keyword)) {
-          keywords.push(keyword);
-          if (keywords.length >= 3) break;
-        }
-      }
-      if (keywords.length > 0) break;
-    }
-
-    // 模糊匹配（字元相似度）- 只包含實際存在的商品
-    if (keywords.length === 0) {
-      // 使用正規表達式進行更靈活的匹配
-      const patterns = [
-        /狼與辛香料/,
-        /蔚藍檔案|blue.?archive/i,
-        /超人力霸王|ultraman/i,
-        /莉可麗絲|lycorico/i,
-        /哥吉拉|godzilla/i,
-        /overlord/i,
-        /魔女之旅/,
-        /犬夜叉|inuyasha/i,
-        /野崎同學/,
-        /hololive/i,
-        /無職轉生/,
-        /河馬|hippo/i,
-        /閃電霹靂車/,
-        /數碼寶貝|digimon/i,
-        /藍寶堅尼|lamborghini/i,
-        /遊戲王|yu.?gi.?oh/i,
-        /魔物獵人|monster.?hunter/i,
-        /初音未來|hatsune.?miku|miku/i,
-        /假面騎士|kamen.?rider/i,
-        /約會大作戰|date.?a.?live/i,
-        /孤獨搖滾/,
-        /探險活寶|adventure.?time/i,
-        /瑞克和莫蒂|rick.?and.?morty/i,
-        /熊熊遇見你|we.?bare.?bears/i,
-        /崩壞.*星穹鐵道|honkai.?star.?rail/i,
-        /史努比|snoopy/i,
-        /精靈寶可夢|pokemon|寶可夢|皮卡丘/i,
-        /我的英雄學院/i,
-      ];
-
-      for (const pattern of patterns) {
-        const match = message.match(pattern);
-        if (match) {
-          keywords.push(match[0]);
-          break;
-        }
-      }
-
-      // 單字元關鍵詞檢查（只針對確實存在的商品）
-      if (keywords.length === 0) {
-        const singleCharKeywords = [
-          '狼',
-          '蔚',
-          '超',
-          '莉',
-          '哥',
-          '魔',
-          '犬',
-          '野',
-          '無',
-          '河',
-          '閃',
-          '數',
-          '藍',
-          '遊',
-          '初',
-          '假',
-          '約',
-          '孤',
-          '探',
-          '瑞',
-          '熊',
-          '崩',
-          '史',
-          '精',
-          '英',
-        ];
-        const foundSingleChar = singleCharKeywords.filter((char) => message.includes(char));
-
-        if (foundSingleChar.length > 0) {
-          const words = message
-            .split('')
-            .filter(
-              (char) =>
-                ![
-                  '我',
-                  '想',
-                  '要',
-                  '買',
-                  '找',
-                  '搜',
-                  '有',
-                  '沒',
-                  '推',
-                  '薦',
-                  '的',
-                  '個',
-                  '一',
-                  '這',
-                  '那',
-                  '什',
-                  '麼',
-                  '哪',
-                  '裡',
-                  '嗎',
-                  '呢',
-                  '啊',
-                  '喔',
-                  '哦',
-                ].includes(char)
-            );
-          if (words.length > 0) {
-            keywords.push(foundSingleChar[0]);
-          }
-        }
-      }
-    }
-  }
-
-  // 最後備案：分詞提取
-  if (keywords.length === 0) {
-    const stopWords = [
-      '我',
-      '想',
-      '要',
-      '買',
-      '找',
-      '搜尋',
-      '搜索',
-      '查詢',
-      '有沒有',
-      '推薦',
-      '的',
-      '個',
-      '一',
-      '這',
-      '那',
-      '什麼',
-      '哪',
-      '裡',
-      '嗎',
-      '呢',
-      '啊',
-      '喔',
-      '哦',
-      '玩具',
-      '模型',
-      '商品',
-      '手辦',
-      '周邊',
-      '相關',
-      '類似',
-      '之類',
-      '等等',
-      '系列',
-      '有',
-      '請',
-      '給',
-      '幫',
-      '介紹',
-      '看看',
-    ];
-
-    // 更靈活的分詞提取
-    let words = message
-      .replace(/[，。！？、；：「」『』（）()]/g, ' ')
-      .split(/\s+/)
-      .filter((word) => word.length > 0 && !stopWords.includes(word));
-
-    // 如果有單字元詞彙，嘗試組合成更有意義的詞彙
-    if (words.some((word) => word.length === 1)) {
-      const combinedWords = [];
-      for (let i = 0; i < words.length; i++) {
-        const word = words[i];
-        if (word.length === 1 && i < words.length - 1) {
-          // 嘗試與下一個字組合
-          const combined = word + words[i + 1];
-          if (combined.length >= 2) {
-            combinedWords.push(combined);
-            i++; // 跳過下一個字
-            continue;
-          }
-        }
-        if (word.length > 1) {
-          combinedWords.push(word);
-        }
-      }
-      words = combinedWords;
-    }
-
-    keywords = words.filter((word) => word.length >= 1);
-  }
-
-  keywords = keywords.filter((keyword) => {
-    if (keyword === '獵人' || keyword.toLowerCase() === 'hunter') {
-      return false;
-    }
-    return true;
+  // 按關鍵詞長度排序，優先匹配較長的關鍵詞
+  const sortedMappings = allMappings.sort((a, b) => {
+    const maxLenA = Math.max(...a[1].map((k) => k.length));
+    const maxLenB = Math.max(...b[1].map((k) => k.length));
+    return maxLenB - maxLenA;
   });
 
-  return keywords.slice(0, 3);
+  for (const [mainKeyword, variants] of sortedMappings) {
+    for (const variant of variants) {
+      if (message.includes(variant)) {
+        keywords.push(mainKeyword);
+        return keywords; // 找到一個匹配就返回
+      }
+    }
+  }
+
+  return keywords;
 };
 
 const extractRequestedQuantity = (message) => {
@@ -525,6 +323,17 @@ const checkForProductRecommendationQuery = (message) => {
     /想買/,
     /找.*的/,
     /有沒有/,
+    /建議/,
+    /適合/,
+    /推薦.*玩具/,
+    /推薦.*商品/,
+    /推薦.*模型/,
+    /玩具.*推薦/,
+    /商品.*推薦/,
+    /模型.*推薦/,
+    /什麼.*玩具/,
+    /什麼.*模型/,
+    /什麼.*商品/,
   ];
 
   return recommendationPatterns.some((pattern) => pattern.test(message));
@@ -534,10 +343,35 @@ const checkForDirectRecommendationQuery = (message) => {
   return /直接推薦|隨便推薦|推薦幾個|給我推薦/.test(message);
 };
 
+const checkForMoreProductsQuery = (message) => {
+  const moreProductsPatterns = [
+    /還有別的嗎/,
+    /還有嗎/,
+    /還有其他的嗎/,
+    /還有什麼/,
+    /還有沒有/,
+    /別的.*嗎/,
+    /其他.*嗎/,
+    /更多.*嗎/,
+    /換一些/,
+    /看看其他/,
+    /其他商品/,
+    /別的商品/,
+    /更多商品/,
+    /還有什麼商品/,
+    /那還有別的嗎/,
+    /那還有嗎/,
+    /那還有什麼/,
+  ];
+
+  return moreProductsPatterns.some((pattern) => pattern.test(message));
+};
+
 module.exports = {
   extractProductKeywords,
   extractRequestedQuantity,
   cleanProductDescription,
   checkForProductRecommendationQuery,
   checkForDirectRecommendationQuery,
+  checkForMoreProductsQuery,
 };
