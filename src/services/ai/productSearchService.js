@@ -1,6 +1,6 @@
 const db = require('../../configs/db');
 const { productsTable } = require('../../models/productSchema');
-const { tagsTable } = require('../../models/tagsSchema');
+const { tagsTable } = require('../../models/tagSchema');
 const { productTagSTable } = require('../../models/productTagSchema');
 const { productImagesTable } = require('../../models/productImageSchema');
 const { eq, and, ilike, inArray, or, sql } = require('drizzle-orm');

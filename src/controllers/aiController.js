@@ -3,9 +3,12 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const db = require('../configs/db');
 const { productsTable } = require('../models/productSchema');
 const { productImagesTable } = require('../models/productImageSchema');
+// 注意：tagsTable, typeEnum, productTagSTable 在 services 中使用，不要移除相關 imports
 const { eq, and, ilike, inArray } = require('drizzle-orm');
 
 // 導入 services
+// const productSearchService = require('../services/ai/productSearchService'); // 在 smartSearchService 內部使用
+// const recommendationService = require('../services/ai/recommendationService'); // 在 smartSearchService 內部使用
 const smartSearchService = require('../services/ai/smartSearchService');
 const textProcessingService = require('../services/ai/textProcessingService');
 
@@ -17,13 +20,21 @@ const extractProductKeywords = textProcessingService.extractProductKeywords;
 // 使用 textProcessingService 中的函數
 const extractRequestedQuantity = textProcessingService.extractRequestedQuantity;
 
+// 注意：以下函數在 services 內部使用，保留引用以避免模組載入錯誤
+// const searchProductsByName = productSearchService.searchProductsByName;
+// const searchProductsByTags = productSearchService.searchProductsByTags;
+// const getRandomProductsFromDB = productSearchService.getRandomProductsFromDB;
+
 const generateProductUrl = (productId) => {
   const frontendUrl = process.env.FRONTEND_URL || 'https://wanpai-frontend.zeabur.app';
   return `${frontendUrl}/products/${productId}`;
 };
 
+// const generateRandomRecommendation = recommendationService.generateRandomRecommendation;
+
 // 使用 textProcessingService 中的函數
 const checkForProductRecommendationQuery = textProcessingService.checkForProductRecommendationQuery;
+// const checkForDirectRecommendationQuery = textProcessingService.checkForDirectRecommendationQuery;
 const checkForMoreProductsQuery = textProcessingService.checkForMoreProductsQuery;
 
 // 快速商品查詢函數
@@ -231,9 +242,12 @@ const generateRecommendation = async (searchResult) => {
   return recommendationText;
 };
 
-const smartSearch = smartSearchService.smartSearch;
+// 智能搜尋邏輯 - 以下函數在 services 內部使用
+// const searchByTagType = productSearchService.searchByTagType;
+// const fuzzySearchProducts = productSearchService.fuzzySearchProducts;
+// const searchSeriesProducts = productSearchService.searchSeriesProducts;
 
-// 移除重複的 smartSearch 實現
+const smartSearch = smartSearchService.smartSearch;
 
 // 主要聊天函數
 exports.chat = async (req, res) => {
