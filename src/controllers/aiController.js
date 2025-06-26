@@ -3,50 +3,13 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const db = require('../configs/db');
 const { productsTable } = require('../models/productSchema');
 const { productImagesTable } = require('../models/productImageSchema');
-const { tagsTable, typeEnum } = require('../models/tagsSchema');
-const { productTagSTable } = require('../models/productTagSchema');
 const { eq, and, ilike, inArray } = require('drizzle-orm');
-const axios = require('axios');
 
 // 導入 services
-const productSearchService = require('../services/ai/productSearchService');
-const recommendationService = require('../services/ai/recommendationService');
 const smartSearchService = require('../services/ai/smartSearchService');
 const textProcessingService = require('../services/ai/textProcessingService');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-const getProductsFromAPI = async () => {
-  try {
-    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const response = await axios.get(`${baseUrl}/api/products`);
-    return response.data;
-  } catch (error) {
-    return [];
-  }
-};
-
-const getFilterTagsFromAPI = async () => {
-  try {
-    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const response = await axios.get(`${baseUrl}/api/tags/filter`);
-    return response.data;
-  } catch (error) {
-    return [];
-  }
-};
-
-const getProductsByTagnamesFromAPI = async (tagnames) => {
-  try {
-    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const response = await axios.get(`${baseUrl}/api/tags/filterByTagnames`, {
-      params: { tagnames: tagnames.join(',') },
-    });
-    return response.data;
-  } catch (error) {
-    return [];
-  }
-};
 
 // 使用 textProcessingService 中的函數
 const extractProductKeywords = textProcessingService.extractProductKeywords;
@@ -54,240 +17,13 @@ const extractProductKeywords = textProcessingService.extractProductKeywords;
 // 使用 textProcessingService 中的函數
 const extractRequestedQuantity = textProcessingService.extractRequestedQuantity;
 
-// 使用 productSearchService 中的函數
-const searchProductsByName = productSearchService.searchProductsByName;
-
-// 改進的商品搜尋功能 - 臨時保留這個函數，稍後會移除
-const searchProductsByNameOld = async (keyword) => {
-  try {
-    // 特殊處理：避免「獵人」單獨匹配到「魔物獵人」
-    if (keyword === '獵人' || keyword.toLowerCase() === 'hunter') {
-      return [];
-    }
-
-    // 根據實際資料表建立關鍵詞映射表
-    const keywordMapping = {
-      // IP 系列
-      變形金剛: ['變形金剛', 'Transformer', '柯博文', '大黃蜂'],
-      無職轉生: ['無職轉生', '無職轉生～到了異世界就拿出真本事～', '魯迪烏斯', '艾莉絲', '希爾菲'],
-      遊戲王: ['遊戲王', 'Yu-Gi-Oh'],
-      百獸王: ['百獸王', 'GOLION', '百獸王GOLION'],
-      河馬: ['河馬', 'hippo'],
-      閃電霹靂車: ['閃電霹靂車'],
-      數碼寶貝: ['數碼寶貝', 'Digimon'],
-      藍寶堅尼: ['藍寶堅尼', 'Lamborghini', 'Aventador', 'Huracan', 'Huracán'],
-      'R35 GT-R': ['R35', 'GT-R', 'GTR'],
-      'KENMARY WORKS': ['KENMARY WORKS'],
-      'VERTEX JZS161 Aristo': ['VERTEX JZS161 Aristo', 'Aristo'],
-      RE雨宮: ['RE雨宮'],
-      'Secret BNR34 Skyline GT-R': ['Secret BNR34', 'Skyline GT-R', 'BNR34'],
-      'Greddy&Rocket Bunny Enkei': ['Greddy', 'Rocket Bunny', 'Enkei'],
-      福斯金龜車: ['福斯金龜車', 'Volkswagen'],
-      孤獨搖滾: ['孤獨搖滾'],
-      狼與辛香料: ['狼與辛香料'],
-      魔物獵人: ['魔物獵人', 'Monster Hunter', 'MonsterHunter'],
-      Overlord: ['Overlord', 'overlord', '雅兒貝德', '安茲'],
-      魔女之旅: ['魔女之旅'],
-      不時輕聲地以俄語遮羞的鄰座艾莉同學: ['不時輕聲地以俄語遮羞的鄰座艾莉同學', '艾莉同學'],
-      初音未來: ['初音未來', 'Hatsune Miku', 'Miku'],
-      假面騎士: ['假面騎士', 'Kamen Rider'],
-      約會大作戰: ['約會大作戰', 'Date A Live'],
-      PANDEM: ['PANDEM'],
-      蔚藍檔案: ['蔚藍檔案', 'Blue Archive'],
-      超人力霸王: ['超人力霸王', 'Ultraman'],
-      犬夜叉: ['犬夜叉', 'Inuyasha'],
-      '3式機龍': ['3式機龍'],
-      車庫拍攝: ['車庫拍攝'],
-      莉可麗絲: ['莉可麗絲', 'LycoReco'],
-      哥吉拉: ['哥吉拉', 'Godzilla'],
-      魔神Z: ['魔神Z', 'Mazinger Z'],
-      女神異聞錄: ['女神異聞錄', 'Persona'],
-      精靈寶可夢: ['精靈寶可夢', 'Pokemon', '寶可夢', '皮卡丘'],
-      史努比: ['史努比', 'Snoopy'],
-      超力戰隊王連者: ['超力戰隊王連者'],
-      '崩壞:星穹鐵道': ['崩壞:星穹鐵道', '星穹鐵道', 'Honkai Star Rail'],
-      熊熊遇見你: ['熊熊遇見你', 'We Bare Bears'],
-      瑞克和莫蒂: ['瑞克和莫蒂', 'Rick and Morty'],
-      探險活寶: ['探險活寶', 'Adventure Time'],
-      IRENA: ['IRENA'],
-      '魅魔 風紀委員': ['魅魔', '風紀委員'],
-      月刊少女野崎同學: ['月刊少女野崎同學', '野崎同學'],
-      hololive: ['hololive'],
-      夢想成為魔法少女: ['夢想成為魔法少女'],
-      鋼彈: ['鋼彈', '高達', 'GUNDAM', 'gundam', 'Gundam'],
-      納蘭詞: ['納蘭詞'],
-      環太平洋: ['環太平洋', 'Pacific Rim'],
-      虎甲人: ['虎甲人'],
-      倒牛奶的女僕: ['倒牛奶的女僕'],
-      絕區零: ['絕區零', 'Zenless Zone Zero'],
-      物語系列: ['物語系列', 'Monogatari'],
-      '勝利女神：妮姬': ['勝利女神：妮姬', 'NIKKE', '妮姬'],
-      我的英雄學院: ['我的英雄學院', 'My Hero Academia'],
-      '厲陰宅 ': ['厲陰宅'],
-      牠: ['牠', 'IT'],
-      葬送的芙莉蓮: ['葬送的芙莉蓮', '芙莉蓮', 'frieren', 'Frieren', '葬送', '芙利蓮'],
-      '日產 Nissan LB-ER34': ['日產', 'Nissan', 'LB-ER34'],
-      '布加迪 Bugatti W16': ['布加迪', 'Bugatti', 'W16'],
-      '馬自達 Mazda RX-7': ['馬自達', 'Mazda', 'RX-7'],
-      '本田 Honda VEZEL': ['本田', 'Honda', 'VEZEL'],
-      烙印勇士: ['烙印勇士', 'Berserk'],
-      納蘭詞: ['納蘭詞'],
-
-      // 品牌 (brand)
-      TAKARATOMY: ['TAKARATOMY', 'TAKARA TOMY', 'takara'],
-      MegaHouse: ['MegaHouse', 'megahouse'],
-      KAIYODO: ['KAIYODO', 'kaiyodo'],
-      'Good Smile': ['Good Smile', 'GoodSmile', 'goodsmile'],
-      JXK: ['JXK', 'jxk'],
-      BANDAI: ['BANDAI', 'bandai'],
-      'AOSHIMA 青島': ['AOSHIMA', '青島', 'aoshima'],
-      PROOF: ['PROOF', 'proof'],
-      KADOKAWA: ['KADOKAWA', 'kadokawa'],
-      'SK JAPAN': ['SK JAPAN', 'sk japan'],
-      TAITO: ['TAITO', 'taito'],
-      '豐田 Toyota': ['豐田', 'Toyota', 'toyota'],
-      FURYU: ['FURYU', 'furyu'],
-      Threezero: ['Threezero', 'threezero'],
-      TOHO: ['TOHO', 'toho'],
-      'WT Minifactory': ['WT Minifactory', 'wt minifactory'],
-      BellFine: ['BellFine', 'bellfine'],
-      一番賞: ['一番賞'],
-      PLEX: ['PLEX', 'plex'],
-      Kotobukiya: ['Kotobukiya', 'kotobukiya'],
-      'Re-ment': ['Re-ment', 'rement'],
-      RIBOSE: ['RIBOSE', 'ribose'],
-      CAPCOM: ['CAPCOM', 'capcom'],
-      一卡通: ['一卡通'],
-      HIROKAWA: ['HIROKAWA', 'hirokawa'],
-      Animester: ['Animester', 'animester'],
-      Design: ['Design', 'design'],
-      BearPanda: ['BearPanda', 'bearpanda'],
-      'Infinity Studio': ['Infinity Studio', 'infinity studio'],
-      BANPRESTO: ['BANPRESTO', 'banpresto'],
-      野獸國: ['野獸國'],
-      MINIGT: ['MINIGT', 'minigt'],
-      'Hobby JAPAN': ['Hobby JAPAN', 'hobby japan'],
-      QuesQ: ['QuesQ', 'quesq'],
-      'Max Factory': ['Max Factory', 'max factory'],
-
-      // 系列 (series)
-      組裝模型: ['組裝模型', '模型'],
-      PVC: ['PVC', 'pvc'],
-      可動完成品: ['可動完成品', '完成品'],
-      景品: ['景品'],
-      手機架: ['手機架'],
-      黏土人: ['黏土人', 'Nendoroid'],
-      GK: ['GK', 'gk'],
-      拼圖模型: ['拼圖模型', '拼圖'],
-      盒玩: ['盒玩'],
-      掛軸: ['掛軸'],
-      IC卡: ['IC卡', 'ic卡'],
-      靜態完成品: ['靜態完成品', '靜態'],
-    };
-
-    // 找出所有可能的搜尋關鍵詞
-    let searchTerms = [keyword];
-    for (const [mainKey, variants] of Object.entries(keywordMapping)) {
-      // 特殊處理短關鍵詞「牠」，必須完全匹配
-      if (mainKey === '牠') {
-        if (keyword === '牠' || keyword.toLowerCase() === 'it') {
-          searchTerms = [...searchTerms, ...variants];
-          break;
-        }
-        continue;
-      }
-
-      // 其他關鍵詞使用雙向檢查：輸入包含變體 或 變體包含輸入
-      if (
-        variants.some(
-          (variant) =>
-            keyword.toLowerCase().includes(variant.toLowerCase()) ||
-            variant.toLowerCase().includes(keyword.toLowerCase())
-        )
-      ) {
-        searchTerms = [...searchTerms, ...variants];
-        break;
-      }
-    }
-
-    // 移除重複項目
-    searchTerms = [...new Set(searchTerms)];
-
-    let products = [];
-    let allResults = new Map(); // 用Map避免重複商品
-
-    // 搜尋所有相關關鍵詞，合併結果
-    for (const term of searchTerms) {
-      const results = await db
-        .select()
-        .from(productsTable)
-        .where(
-          and(
-            eq(productsTable.isDeleted, false),
-            eq(productsTable.status, 'active'),
-            ilike(productsTable.name, `%${term}%`)
-          )
-        )
-        .limit(10);
-
-      // 將結果添加到Map中，用ID作為key避免重複
-      results.forEach((product) => {
-        allResults.set(product.id, product);
-      });
-    }
-
-    products = Array.from(allResults.values());
-
-    return products;
-  } catch (error) {
-    console.error('搜尋商品名稱時發生錯誤:', error);
-    return [];
-  }
-};
-
-const searchProductsByTags = productSearchService.searchProductsByTags;
-
-const smartSearchProducts = async (message) => {
-  const keywords = extractProductKeywords(message);
-  console.log('提取的關鍵詞:', keywords);
-
-  if (keywords.length === 0) {
-    return [];
-  }
-
-  for (const keyword of keywords) {
-    const nameResults = await searchProductsByName(keyword);
-    if (nameResults.length > 0) {
-      return nameResults;
-    }
-
-    const tagResults = await searchProductsByTags(keyword);
-    if (tagResults.length > 0) {
-      return tagResults;
-    }
-  }
-
-  return [];
-};
-
-// 使用 productSearchService 中的函數
-const getRandomProductsFromDB = productSearchService.getRandomProductsFromDB;
-
 const generateProductUrl = (productId) => {
   const frontendUrl = process.env.FRONTEND_URL || 'https://wanpai-frontend.zeabur.app';
   return `${frontendUrl}/products/${productId}`;
 };
 
-const generateCategoryUrl = () => {
-  const frontendUrl = process.env.FRONTEND_URL || 'https://wanpai-frontend.zeabur.app';
-  return `${frontendUrl}/`;
-};
-
-const generateRandomRecommendation = recommendationService.generateRandomRecommendation;
-
 // 使用 textProcessingService 中的函數
 const checkForProductRecommendationQuery = textProcessingService.checkForProductRecommendationQuery;
-const checkForDirectRecommendationQuery = textProcessingService.checkForDirectRecommendationQuery;
 const checkForMoreProductsQuery = textProcessingService.checkForMoreProductsQuery;
 
 // 快速商品查詢函數
@@ -339,117 +75,7 @@ const getProducts = async (query = null) => {
 
     return productsWithCovers;
   } catch (error) {
-    console.error('商品查詢錯誤:', error);
-    return [];
-  }
-};
-
-// 獲取所有商品（用於推薦）
-const getAllProducts = async () => {
-  try {
-    const products = await db
-      .select({
-        id: productsTable.id,
-        name: productsTable.name,
-        description: productsTable.description,
-        price: productsTable.price,
-        stockQuantity: productsTable.stockQuantity,
-        category: productsTable.category,
-      })
-      .from(productsTable)
-      .where(eq(productsTable.isDeleted, false))
-      .limit(20);
-
-    return products;
-  } catch (error) {
-    console.error('獲取商品錯誤:', error);
-    return [];
-  }
-};
-
-// 使用現有的getAllFilterTags邏輯
-const getFilterTags = async () => {
-  try {
-    const brands = await db
-      .select({
-        id: tagsTable.id,
-        tagname: tagsTable.tagname,
-      })
-      .from(tagsTable)
-      .where(eq(tagsTable.type, typeEnum.enumValues[1]));
-
-    const series = await db
-      .select({
-        id: tagsTable.id,
-        tagname: tagsTable.tagname,
-      })
-      .from(tagsTable)
-      .where(eq(tagsTable.type, typeEnum.enumValues[2]));
-
-    const ip = await db
-      .select({
-        id: tagsTable.id,
-        tagname: tagsTable.tagname,
-      })
-      .from(tagsTable)
-      .where(eq(tagsTable.type, typeEnum.enumValues[0]));
-
-    return { brands, series, ip };
-  } catch (error) {
-    console.error('獲取標籤錯誤:', error);
-    return { brands: [], series: [], ip: [] };
-  }
-};
-
-// 使用現有的getProductsByTagnames邏輯
-const getProductsByTag = async (tagname) => {
-  try {
-    const tags = await db
-      .select({ id: tagsTable.id })
-      .from(tagsTable)
-      .where(eq(tagsTable.tagname, tagname));
-
-    if (tags.length === 0) return [];
-
-    const tagId = tags[0].id;
-
-    const productTagLinks = await db
-      .select({ productId: productTagSTable.productId })
-      .from(productTagSTable)
-      .where(eq(productTagSTable.tagId, tagId));
-
-    if (productTagLinks.length === 0) return [];
-
-    const productIds = productTagLinks.map((p) => p.productId);
-
-    const products = await db
-      .select()
-      .from(productsTable)
-      .where(and(inArray(productsTable.id, productIds), eq(productsTable.status, 'active')));
-
-    if (products.length === 0) return [];
-
-    const activeProductIds = products.map((p) => p.id);
-    const coverImages = await db
-      .select({ productId: productImagesTable.productId, imgUrl: productImagesTable.imgUrl })
-      .from(productImagesTable)
-      .where(
-        and(
-          inArray(productImagesTable.productId, activeProductIds),
-          eq(productImagesTable.isCover, true)
-        )
-      );
-
-    const coverMap = new Map(coverImages.map((img) => [img.productId, img.imgUrl]));
-
-    const productsWithCovers = products.map((p) => ({
-      ...p,
-      coverImage: coverMap.get(p.id) || null,
-    }));
-
-    return productsWithCovers;
-  } catch (error) {
-    console.error('標籤商品查詢錯誤:', error);
+    error;
     return [];
   }
 };
@@ -605,139 +231,9 @@ const generateRecommendation = async (searchResult) => {
   return recommendationText;
 };
 
-// 智能搜尋邏輯
-const searchByTagType = productSearchService.searchByTagType;
-
-const fuzzySearchProducts = productSearchService.fuzzySearchProducts;
-
-const searchSeriesProducts = productSearchService.searchSeriesProducts;
-
 const smartSearch = smartSearchService.smartSearch;
 
 // 移除重複的 smartSearch 實現
-const smartSearchOld = async (message, requestedQuantity = 3) => {
-  const keywords = extractProductKeywords(message);
-
-  let products = [];
-  let searchResult = { products: [], searchType: 'none', searchKeyword: null };
-
-  if (keywords.length === 0) {
-    const allProducts = await getProducts();
-    if (allProducts.length > 0) {
-      const shuffled = allProducts.sort(() => 0.5 - Math.random());
-      products = shuffled.slice(0, Math.min(5, allProducts.length));
-      searchResult = { products, searchType: 'random', searchKeyword: null };
-    }
-    return searchResult;
-  }
-
-  const searchKeyword = keywords[0]; // 使用第一個關鍵詞
-
-  // 0. 優先檢查是否為系列查詢
-  const seriesKeywords = [
-    '組裝模型',
-    'PVC',
-    '可動完成品',
-    '景品',
-    '手機架',
-    '黏土人',
-    'GK',
-    '拼圖模型',
-    '盒玩',
-    '掛軸',
-    'IC卡',
-    '靜態完成品',
-    '模型',
-    '完成品',
-    'Nendoroid',
-    'nendoroid',
-  ];
-
-  for (const keyword of keywords) {
-    if (seriesKeywords.includes(keyword)) {
-      products = await searchSeriesProducts(keyword, requestedQuantity);
-      if (products.length > 0) {
-        searchResult = {
-          products,
-          searchType: 'series',
-          searchKeyword: keyword,
-          searchTypeDisplay: '系列',
-          isSeriesRecommendation: true,
-        };
-        return searchResult;
-      }
-    }
-  }
-
-  products = await searchProductsByName(searchKeyword);
-  if (products.length > 0) {
-    const productIds = products.map((p) => p.id);
-    const coverImages = await db
-      .select({ productId: productImagesTable.productId, imgUrl: productImagesTable.imgUrl })
-      .from(productImagesTable)
-      .where(
-        and(inArray(productImagesTable.productId, productIds), eq(productImagesTable.isCover, true))
-      );
-
-    const coverMap = new Map(coverImages.map((img) => [img.productId, img.imgUrl]));
-    products = products.map((p) => ({ ...p, coverImage: coverMap.get(p.id) || null }));
-
-    searchResult = { products, searchType: 'name', searchKeyword };
-    return searchResult;
-  }
-  products = await fuzzySearchProducts(keywords);
-  if (products.length > 0) {
-    searchResult = { products, searchType: 'fuzzy', searchKeyword: keywords.join('、') };
-    return searchResult;
-  }
-  const tagTypes = ['ip', 'brand', 'series'];
-
-  for (const tagType of tagTypes) {
-    for (const keyword of keywords) {
-      products = await searchByTagType(keyword, tagType);
-      if (products.length > 0) {
-        const typeMap = { ip: 'IP系列', brand: '品牌', series: '系列' };
-        searchResult = {
-          products,
-          searchType: tagType,
-          searchKeyword: keyword,
-          searchTypeDisplay: typeMap[tagType],
-        };
-        return searchResult;
-      }
-    }
-  }
-
-  // 4. 如果沒找到，嘗試用原本的模糊搜尋
-  products = await getProducts(searchKeyword);
-  if (products.length > 0) {
-    searchResult = { products, searchType: 'name', searchKeyword };
-    return searchResult;
-  }
-
-  // 5. 最後返回隨機推薦（確保一定有商品推薦）
-  const allProducts = await getProducts();
-  if (allProducts.length > 0) {
-    const shuffled = allProducts.sort(() => 0.5 - Math.random());
-    products = shuffled.slice(0, Math.min(requestedQuantity, allProducts.length));
-
-    // 添加封面圖片
-    const productIds = products.map((p) => p.id);
-    const coverImages = await db
-      .select({ productId: productImagesTable.productId, imgUrl: productImagesTable.imgUrl })
-      .from(productImagesTable)
-      .where(
-        and(inArray(productImagesTable.productId, productIds), eq(productImagesTable.isCover, true))
-      );
-
-    const coverMap = new Map(coverImages.map((img) => [img.productId, img.imgUrl]));
-    products = products.map((p) => ({ ...p, coverImage: coverMap.get(p.id) || null }));
-
-    searchResult = { products, searchType: 'random', searchKeyword, requestedQuantity };
-  }
-
-  return searchResult;
-};
 
 // 主要聊天函數
 exports.chat = async (req, res) => {
@@ -862,9 +358,6 @@ exports.chat = async (req, res) => {
     // 分析對話歷史，提取上下文
     if (history && history.length > 0) {
       const recentMessages = history.slice(-4); // 取最近4條對話
-      const conversationContext = recentMessages
-        .map((msg) => `${msg.role}: ${msg.content}`)
-        .join('\n');
 
       // 從歷史中提取商品關鍵詞
       const historyText = recentMessages.map((msg) => msg.content).join(' ');
@@ -999,7 +492,7 @@ ${
     const finalResponse = formattedText + formattedProductInfo;
 
     res.json({ reply: finalResponse });
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: '抱歉，我現在無法處理您的請求。請稍後再試。' });
   }
 };
