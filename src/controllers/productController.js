@@ -23,6 +23,8 @@ const getAllProducts = async (req, res) => {
       query = query.where(
         and(eq(productsTable.isDeleted, false), eq(productsTable.status, status))
       );
+    } else if (isAdmin) {
+      query = query.where(eq(productsTable.isDeleted, false));
     }
 
     const products = await query;
@@ -64,14 +66,9 @@ const getProductById = async (req, res) => {
   let userId = null;
 
   if (authHeader) {
-    const token = authHeader.split(' ')[1]; // 取得 "Bearer token" 中的 token
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_fallback_secret');
-      userId = decoded.id; // 解出使用者 ID
-      // eslint-disable-next-line no-unused-vars
-    } catch (err) {
-      // token 錯誤，不做處理，userId 保持為 null
-    }
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_fallback_secret');
+    userId = decoded.id;
   }
 
   try {
@@ -126,7 +123,11 @@ const createProduct = async (req, res) => {
       const [inserted] = await tx
         .insert(productsTable)
         .values({
-          ...req.body,
+          name: req.body.name,
+          sku: req.body.sku,
+          description: req.body.description,
+          price: req.body.price,
+          status: req.body.status || 'draft',
         })
         .returning();
 
@@ -157,7 +158,11 @@ const updateProduct = async (req, res) => {
       const [updated] = await tx
         .update(productsTable)
         .set({
-          ...req.body,
+          name: req.body.name,
+          sku: req.body.sku,
+          description: req.body.description,
+          price: req.body.price,
+          status: req.body.status || 'active',
         })
         .where(eq(productsTable.id, id))
         .returning();
