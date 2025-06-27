@@ -1,6 +1,7 @@
 const { findOrders, getOrderWithItems } = require('../services/orderService');
 const db = require('../configs/db');
 const { ordersTable } = require('../models/orderSchema');
+const { orderItemsTable } = require('../models/orderItemSchema');
 
 const createOrder = async (req, res) => {
   try {
@@ -12,6 +13,7 @@ const createOrder = async (req, res) => {
       shippingAddress,
       totalPrice,
       quantity,
+      items,
     } = req.body;
 
     if (
@@ -26,22 +28,39 @@ const createOrder = async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const [insertedOrder] = await db
-      .insert(ordersTable)
-      .values({
-        userId,
-        orderNumber,
-        recipientName,
-        recipientPhone,
-        shippingAddress,
-        totalPrice,
-        quantity,
-      })
-      .returning();
+    const result = await db.transaction(async (tx) => {
+      const [insertedOrder] = await tx
+        .insert(ordersTable)
+        .values({
+          userId,
+          orderNumber,
+          recipientName,
+          recipientPhone,
+          shippingAddress,
+          totalPrice,
+          quantity,
+        })
+        .returning();
 
-    res.status(201).json(insertedOrder);
-  } catch (err) {
-    console.error('[createOrder] error:', err);
+      if (items && Array.isArray(items) && items.length > 0) {
+        const orderItems = items.map((item) => ({
+          orderId: insertedOrder.id,
+          productId: item.productId,
+          productName: item.productName,
+          productImage: item.productImage || 'no-image.png',
+          quantity: item.quantity,
+          price: item.price,
+          subtotal: item.subtotal,
+        }));
+
+        await tx.insert(orderItemsTable).values(orderItems);
+      }
+
+      return insertedOrder;
+    });
+
+    res.status(201).json(result);
+  } catch {
     res.status(500).json({ error: 'Internal server error' });
   }
 };

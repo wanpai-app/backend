@@ -57,11 +57,15 @@ const findOrders = async ({ userId, filters = {} }) => {
     conditions.push(eq(ordersTable.status, filters.status));
   }
 
-  if (isValidDate(filters.startDate) && isValidDate(filters.endDate)) {
-    conditions.push(
-      gte(ordersTable.createdAt, new Date(filters.startDate)),
-      lte(ordersTable.createdAt, new Date(filters.endDate))
-    );
+  if (
+    filters.startDate &&
+    filters.endDate &&
+    isValidDate(filters.startDate) &&
+    isValidDate(filters.endDate)
+  ) {
+    const startDate = new Date(filters.startDate);
+    const endDate = new Date(filters.endDate);
+    conditions.push(gte(ordersTable.createdAt, startDate), lte(ordersTable.createdAt, endDate));
   }
 
   if (filters.search) {
