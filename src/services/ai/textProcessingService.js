@@ -1,6 +1,4 @@
-/**
- * 文字處理相關服務
- */
+
 
 const extractProductKeywords = (message) => {
   let keywords = [];
@@ -340,7 +338,33 @@ const checkForProductRecommendationQuery = (message) => {
 };
 
 const checkForDirectRecommendationQuery = (message) => {
-  return /直接推薦|隨便推薦|推薦幾個|給我推薦/.test(message);
+  const directRecommendationPatterns = [
+    /^給我推薦玩具$/,
+    /^推薦玩具$/,
+    /^給我推薦商品$/,
+    /^推薦商品$/,
+    /^給我推薦模型$/,
+    /^推薦模型$/,
+    /^給我推薦$/,
+    /^推薦$/,
+    /^直接推薦/,
+    /^隨便推薦/,
+    /^推薦幾個/,
+    /^給我推薦.*玩具$/,
+    /^給我推薦.*商品$/,
+    /^給我推薦.*模型$/,
+    /^推薦.*玩具$/,
+    /^推薦.*商品$/,
+    /^推薦.*模型$/,
+    /給我推薦玩具/,
+    /推薦玩具/,
+    /給我推薦商品/,
+    /推薦商品/,
+    /給我推薦模型/,
+    /推薦模型/,
+  ];
+
+  return directRecommendationPatterns.some((pattern) => pattern.test(message));
 };
 
 const checkForMoreProductsQuery = (message) => {

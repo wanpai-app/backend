@@ -3,41 +3,27 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const db = require('../configs/db');
 const { productsTable } = require('../models/productSchema');
 const { productImagesTable } = require('../models/productImageSchema');
-// 注意：tagsTable, typeEnum, productTagSTable 在 services 中使用，不要移除相關 imports
+
 const { eq, and, ilike, inArray } = require('drizzle-orm');
 
-// 導入 services
-// const productSearchService = require('../services/ai/productSearchService'); // 在 smartSearchService 內部使用
-// const recommendationService = require('../services/ai/recommendationService'); // 在 smartSearchService 內部使用
 const smartSearchService = require('../services/ai/smartSearchService');
 const textProcessingService = require('../services/ai/textProcessingService');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// 使用 textProcessingService 中的函數
 const extractProductKeywords = textProcessingService.extractProductKeywords;
 
-// 使用 textProcessingService 中的函數
 const extractRequestedQuantity = textProcessingService.extractRequestedQuantity;
-
-// 注意：以下函數在 services 內部使用，保留引用以避免模組載入錯誤
-// const searchProductsByName = productSearchService.searchProductsByName;
-// const searchProductsByTags = productSearchService.searchProductsByTags;
-// const getRandomProductsFromDB = productSearchService.getRandomProductsFromDB;
 
 const generateProductUrl = (productId) => {
   const frontendUrl = process.env.FRONTEND_URL || 'https://wanpai-frontend.zeabur.app';
   return `${frontendUrl}/products/${productId}`;
 };
 
-// const generateRandomRecommendation = recommendationService.generateRandomRecommendation;
-
-// 使用 textProcessingService 中的函數
 const checkForProductRecommendationQuery = textProcessingService.checkForProductRecommendationQuery;
-// const checkForDirectRecommendationQuery = textProcessingService.checkForDirectRecommendationQuery;
+const checkForDirectRecommendationQuery = textProcessingService.checkForDirectRecommendationQuery;
 const checkForMoreProductsQuery = textProcessingService.checkForMoreProductsQuery;
 
-// 快速商品查詢函數
 const getProducts = async (query = null) => {
   try {
     let dbQuery = db.select().from(productsTable).orderBy(productsTable.id);
@@ -275,6 +261,9 @@ exports.chat = async (req, res) => {
         message
       );
 
+    // 檢查是否為直接推薦請求
+    const isDirectRecommendationQuery = checkForDirectRecommendationQuery(message);
+
     // 檢查是否有推薦意圖
     const hasRecommendationIntent = checkForProductRecommendationQuery(message);
 
@@ -294,8 +283,41 @@ exports.chat = async (req, res) => {
 
     let productInfo = '';
 
-    // 優化邏輯順序：優先處理具體商品查詢
-    if (isRequestingMoreProducts) {
+    // 優化邏輯順序：優先處理直接推薦請求，然後是具體商品查詢
+    if (isDirectRecommendationQuery) {
+      // 直接推薦請求：立即隨機推薦商品
+      const allProducts = await getProducts();
+      if (allProducts.length > 0) {
+        const shuffled = allProducts.sort(() => 0.5 - Math.random());
+        const randomProducts = shuffled.slice(0, Math.min(requestedQuantity, allProducts.length));
+
+        // 添加封面圖片
+        const productIds = randomProducts.map((p) => p.id);
+        const coverImages = await db
+          .select({ productId: productImagesTable.productId, imgUrl: productImagesTable.imgUrl })
+          .from(productImagesTable)
+          .where(
+            and(
+              inArray(productImagesTable.productId, productIds),
+              eq(productImagesTable.isCover, true)
+            )
+          );
+
+        const coverMap = new Map(coverImages.map((img) => [img.productId, img.imgUrl]));
+        const productsWithCovers = randomProducts.map((p) => ({
+          ...p,
+          coverImage: coverMap.get(p.id) || null,
+        }));
+
+        const searchResult = {
+          products: productsWithCovers,
+          searchType: 'random',
+          searchKeyword: '推薦商品',
+          requestedQuantity,
+        };
+        productInfo = await generateRecommendation(searchResult);
+      }
+    } else if (isRequestingMoreProducts) {
       // 要求更多商品：直接隨機推薦，不考慮歷史關鍵詞
       const allProducts = await getProducts();
       if (allProducts.length > 0) {
@@ -386,10 +408,18 @@ exports.chat = async (req, res) => {
     let hasFoundProducts = false;
 
     if (
-      (isProductQuery || isGeneralProductQuery || isRequestingMoreProducts || hasSpecificProduct) &&
+      (isDirectRecommendationQuery ||
+        isProductQuery ||
+        isGeneralProductQuery ||
+        isRequestingMoreProducts ||
+        hasSpecificProduct) &&
       productInfo
     ) {
-      if (isRequestingMoreProducts) {
+      if (isDirectRecommendationQuery) {
+        hasFoundProducts = true;
+        searchInfo =
+          '\n\n【重要】：客戶直接要求推薦玩具/商品，系統提供了隨機商品推薦，請表達為客戶推薦精選商品。';
+      } else if (isRequestingMoreProducts) {
         hasFoundProducts = true;
         searchInfo =
           '\n\n【重要】：客戶要求更多商品，系統提供了新的商品推薦，請表達為客戶推薦更多商品選擇。';
@@ -430,8 +460,14 @@ exports.chat = async (req, res) => {
 2. 品牌（brand）：如BANDAI、TAITO、Good Smile、MegaHouse、Kotobukiya、TAKARATOMY等製造商
 3. 系列（series）：如組裝模型、PVC、可動完成品、景品、黏土人、GK等產品線
 
-【系列查詢處理】：
-當客戶詢問「組裝模型」「PVC」「景品」「黏土人」「可動完成品」等系列時，系統會自動推薦該系列的精選商品。
+【專業推薦原則】：
+1. 【核心理念】所有商品都有其收藏價值和適用性，絕對不要質疑商品與客戶需求的關聯性
+2. 針對不同客群使用正面的推薦語言：
+   - 小朋友：「這些可能適合小朋友」、「這些商品很受歡迎」
+   - 收藏者：「這些是精選收藏品」
+   - 一般客戶：「這些都是熱門商品」
+3. 【絕對禁止】質疑任何商品與客戶的適配性，例如「XX跟小朋友沒有直接關係」
+4. 保持正面、專業、熱情的服務態度
 
 【絕對禁止事項】：
 1. 【最嚴重違規】絕對嚴禁使用任何簡體字或大陸用語
@@ -443,6 +479,7 @@ exports.chat = async (req, res) => {
 7. 絕對不要在回應中出現「[連結1]」「[連結2]」等技術性佔位符
 8. 不要在AI回應中重複顯示商品推薦，因為系統會自動添加商品清單
 9. 【重要】絕對禁止提及任何具體的動漫作品名稱，只能說「相關商品」或「熱門商品」
+10. 【最重要】絕對禁止質疑商品與客戶需求的關聯性，例如說某商品跟某客群沒有關係
 
 【正體中文用詞規範】：
 - 使用「檢視」而非「查看」
@@ -464,24 +501,28 @@ exports.chat = async (req, res) => {
 【回應格式】：
 ${
   hasFoundProducts
-    ? isRequestingMoreProducts
-      ? '- 要求更多商品時：請說"當然！為您推薦更多精選商品"或"還有這些商品供您參考"'
-      : productInfo &&
-          (productInfo.includes('🎯 為您推薦我們店內的熱門商品') ||
-            productInfo.includes('🎯 為您推薦熱門商品'))
-        ? '- 熱門商品推薦時：請說"為您推薦熱門商品"'
-        : productInfo && productInfo.includes('🎲 為您推薦「')
-          ? '- 系列商品推薦時：請說"這個系列有很多精選商品，為您推薦幾款"'
-          : productInfo &&
-              (productInfo.includes('🎯 找到與') ||
-                productInfo.includes('🎯 找到 IP系列') ||
-                productInfo.includes('🏭 找到 品牌') ||
-                productInfo.includes('📺 找到 系列'))
-            ? '- 找到特定商品時：簡單確認即可，如"找到相關商品"'
-            : '- 沒找到特定商品但有推薦時：說"很抱歉沒有找到特定商品，不過為您推薦其他商品"'
+    ? isDirectRecommendationQuery
+      ? '- 直接推薦請求時：請說"當然！為您推薦幾款精選商品"或"好的！這些都是我們店內的熱門商品"'
+      : isRequestingMoreProducts
+        ? '- 要求更多商品時：請說"當然！為您推薦更多精選商品"或"還有這些商品供您參考"'
+        : productInfo &&
+            (productInfo.includes('🎯 為您推薦我們店內的熱門商品') ||
+              productInfo.includes('🎯 為您推薦熱門商品'))
+          ? '- 熱門商品推薦時：請說"為您推薦熱門商品"'
+          : productInfo && productInfo.includes('🎲 為您推薦「')
+            ? '- 系列商品推薦時：請說"這個系列有很多精選商品，為您推薦幾款"'
+            : productInfo &&
+                (productInfo.includes('🎯 找到與') ||
+                  productInfo.includes('🎯 找到 IP系列') ||
+                  productInfo.includes('🏭 找到 品牌') ||
+                  productInfo.includes('📺 找到 系列'))
+              ? '- 找到特定商品時：簡單確認即可，如"找到相關商品"，如果客戶提到小朋友，請用"這些可能適合小朋友"的正面表達'
+              : '- 沒找到特定商品但有推薦時：說"很抱歉沒有找到特定商品，不過為您推薦其他商品"'
     : '- 完全沒找到時：說"很抱歉沒有找到相關商品，請您瀏覽其他商品"'
 }
 - 不要提及連結、清單或具體商品名稱
+- 針對不同客群使用正面語言：小朋友「這些可能適合小朋友」，成人「這些都是熱門商品」
+- 絕對禁止質疑商品與客戶的適配性
 - 回應要自然友善，展現專業客服態度${contextInfo}${searchInfo}`;
 
     const result = await model.generateContent(prompt + `\n\n使用者問題：「${message}」`);
