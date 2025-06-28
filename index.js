@@ -47,10 +47,11 @@ app.use('/api/cart', cartRoutes);
 app.use('/api', tagsRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api', orderRoutes);
 app.use('/api', aiRoutes);
-app.use('/api/user', userOrderRoutes);
+app.use('/api', userOrderRoutes);
 app.use('/api', adminOrderRoutes);
+app.use('/api', stockLogRoutes);
+
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on http://0.0.0.0:${PORT}`);
