@@ -1,5 +1,3 @@
-
-
 const extractProductKeywords = (message) => {
   let keywords = [];
 
