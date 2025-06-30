@@ -27,7 +27,7 @@ const orderSchema = z.object({
   shippingAddress: z.string().min(1),
   totalPrice: z.number().min(0),
   quantity: z.number().min(1),
-  status: z.enum(statusValues).optional().default('pending'),
+  status: z.enum(statusValues).optional().default('paid'),
   items: z.array(orderItemSchema).optional(),
 });
 

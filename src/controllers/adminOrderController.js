@@ -42,12 +42,24 @@ const updateOrder = async (req, res) => {
   if (isNaN(id)) return res.status(400).json({ error: '無效的ID' });
 
   try {
+    const [currentOrder] = await db.select().from(ordersTable).where(eq(ordersTable.id, id));
+
+    if (!currentOrder) {
+      return res.status(404).json({ error: '找不到該訂單' });
+    }
+
+    const updateData = { ...req.body, updatedAt: new Date() };
+
+    if (req.body.status === 'shipped' && currentOrder.status !== 'shipped') {
+      updateData.shippedAt = new Date();
+    }
+    if (req.body.status === 'delivered' && currentOrder.status !== 'delivered') {
+      updateData.deliveredAt = new Date();
+    }
+
     const [insertedOrder] = await db
       .update(ordersTable)
-      .set({
-        ...req.body,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(ordersTable.id, id))
       .returning();
     res.status(200).json(insertedOrder);

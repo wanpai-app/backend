@@ -13,6 +13,7 @@ const createOrder = async (req, res) => {
       shippingAddress,
       totalPrice,
       quantity,
+      status,
       items,
     } = req.body;
 
@@ -39,6 +40,9 @@ const createOrder = async (req, res) => {
           shippingAddress,
           totalPrice,
           quantity,
+          status: status || 'paid',
+          createdAt: new Date(),
+          updatedAt: new Date(),
         })
         .returning();
 
