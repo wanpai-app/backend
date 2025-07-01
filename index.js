@@ -28,7 +28,7 @@ app.use(
     allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
-app.options('https://wanpai-frontend.zeabur.app/', cors());
+app.options('*', cors());
 
 app.use('/api/auth', authRoutes);
 app.use('/api', productRecommendRoutes);
