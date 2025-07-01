@@ -4,7 +4,7 @@ const { productImagesTable } = require('../models/productImageSchema');
 const { favoritesTable } = require('../models/favoriteSchema');
 const jwt = require('jsonwebtoken');
 
-const { inArray, eq, and, asc } = require('drizzle-orm');
+const { inArray, eq, and, asc, count } = require('drizzle-orm');
 const { deleteProductImages } = require('../services/productImageService');
 const { uploadProductImage } = require('../controllers/productImageController');
 
@@ -13,22 +13,50 @@ const getAllProducts = async (req, res) => {
 
   try {
     const status = req.query.status;
-    let query = db.select().from(productsTable).orderBy(productsTable.id);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
 
+    let baseCondition;
     if (!isAdmin) {
-      query = query.where(
-        and(eq(productsTable.isDeleted, false), eq(productsTable.status, 'active'))
-      );
+      baseCondition = and(eq(productsTable.isDeleted, false), eq(productsTable.status, 'active'));
     } else if (status && status !== 'all') {
-      query = query.where(
-        and(eq(productsTable.isDeleted, false), eq(productsTable.status, status))
-      );
+      baseCondition = and(eq(productsTable.isDeleted, false), eq(productsTable.status, status));
     } else if (isAdmin) {
-      query = query.where(eq(productsTable.isDeleted, false));
+      baseCondition = eq(productsTable.isDeleted, false);
     }
 
+    const [totalResult] = await db
+      .select({ count: count() })
+      .from(productsTable)
+      .where(baseCondition);
+
+    const totalCount = totalResult.count;
+    const totalPages = Math.ceil(totalCount / limit);
+
+    let query = db
+      .select()
+      .from(productsTable)
+      .where(baseCondition)
+      .orderBy(productsTable.id)
+      .limit(limit)
+      .offset(offset);
+
     const products = await query;
-    if (products.length === 0) return res.json([]);
+    
+    if (products.length === 0) {
+      return res.json({
+        data: [],
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalCount,
+          limit,
+          hasNextPage: false,
+          hasPreviousPage: false
+        }
+      });
+    }
 
     const productIds = products.map((p) => p.id);
 
@@ -52,7 +80,17 @@ const getAllProducts = async (req, res) => {
       coverImage: coverMap.get(p.id) || null,
     }));
 
-    res.json(productsWithCovers);
+    res.json({
+      data: productsWithCovers,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        limit,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1
+      }
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
