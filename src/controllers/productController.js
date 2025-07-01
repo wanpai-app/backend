@@ -4,7 +4,7 @@ const { productImagesTable } = require('../models/productImageSchema');
 const { favoritesTable } = require('../models/favoriteSchema');
 const jwt = require('jsonwebtoken');
 
-const { inArray, eq, and, asc, count } = require('drizzle-orm');
+const { eq, and, asc, count } = require('drizzle-orm');
 const { deleteProductImages } = require('../services/productImageService');
 const { uploadProductImage } = require('../controllers/productImageController');
 
@@ -34,16 +34,33 @@ const getAllProducts = async (req, res) => {
     const totalCount = totalResult.count;
     const totalPages = Math.ceil(totalCount / limit);
 
-    let query = db
-      .select()
+    const products = await db
+      .select({
+        id: productsTable.id,
+        name: productsTable.name,
+        sku: productsTable.sku,
+        description: productsTable.description,
+        price: productsTable.price,
+        status: productsTable.status,
+        stockOnHand: productsTable.stockOnHand,
+        stockReserved: productsTable.stockReserved,
+        createdAt: productsTable.createdAt,
+        updatedAt: productsTable.updatedAt,
+        coverImage: productImagesTable.imgUrl,
+      })
       .from(productsTable)
+      .leftJoin(
+        productImagesTable,
+        and(
+          eq(productsTable.id, productImagesTable.productId),
+          eq(productImagesTable.isCover, true)
+        )
+      )
       .where(baseCondition)
       .orderBy(productsTable.id)
       .limit(limit)
       .offset(offset);
 
-    const products = await query;
-    
     if (products.length === 0) {
       return res.json({
         data: [],
@@ -53,43 +70,21 @@ const getAllProducts = async (req, res) => {
           totalCount,
           limit,
           hasNextPage: false,
-          hasPreviousPage: false
-        }
+          hasPreviousPage: false,
+        },
       });
     }
 
-    const productIds = products.map((p) => p.id);
-
-    const coverImages = await db
-      .select({
-        productId: productImagesTable.productId,
-        imgUrl: productImagesTable.imgUrl,
-      })
-      .from(productImagesTable)
-      .where(
-        and(inArray(productImagesTable.productId, productIds), eq(productImagesTable.isCover, true))
-      );
-
-    const coverMap = new Map();
-    for (const img of coverImages) {
-      coverMap.set(img.productId, img.imgUrl);
-    }
-
-    const productsWithCovers = products.map((p) => ({
-      ...p,
-      coverImage: coverMap.get(p.id) || null,
-    }));
-
     res.json({
-      data: productsWithCovers,
+      data: products,
       pagination: {
         currentPage: page,
         totalPages,
         totalCount,
         limit,
         hasNextPage: page < totalPages,
-        hasPreviousPage: page > 1
-      }
+        hasPreviousPage: page > 1,
+      },
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
