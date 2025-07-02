@@ -79,8 +79,7 @@ const tagsController = {
         );
 
       res.json({ products });
-    } catch (error) {
-      console.error('Error in getProductsByTagnames:', error);
+    } catch {
       res.status(500).json({ message: 'Internal server error' });
     }
   },

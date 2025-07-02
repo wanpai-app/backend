@@ -16,7 +16,7 @@ const extractProductKeywords = textProcessingService.extractProductKeywords;
 const extractRequestedQuantity = textProcessingService.extractRequestedQuantity;
 
 const generateProductUrl = (productId) => {
-  const frontendUrl = process.env.FRONTEND_URL || 'https://wanpai-frontend.zeabur.app';
+  const frontendUrl = process.env.FRONTEND_URL;
   return `${frontendUrl}/products/${productId}`;
 };
 
@@ -28,7 +28,6 @@ const getProducts = async (query = null) => {
   try {
     let dbQuery = db.select().from(productsTable).orderBy(productsTable.id);
 
-    // 只顯示活躍且未刪除的商品
     if (query) {
       dbQuery = dbQuery.where(
         and(
@@ -49,7 +48,6 @@ const getProducts = async (query = null) => {
 
     const productIds = products.map((p) => p.id);
 
-    // 獲取封面圖片
     const coverImages = await db
       .select({
         productId: productImagesTable.productId,
