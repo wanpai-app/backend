@@ -74,7 +74,7 @@
 ```
 
 3. 設定環境變數
-   建立 `.env` 檔案，並依照 `.env.template` 或下方格式填入必要變數：
+   建立 `.env` 檔案，並依照 `.env.production` 或下方格式填入必要變數：
 
 ```
 DATABASE_URL=
@@ -91,6 +91,7 @@ AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 S3_BUCKET_NAME=
 AWS_REGION=
+AWS_S3_ENDPOINT=
 
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
@@ -120,41 +121,51 @@ GEMINI_API_KEY=
 
   - 新增編輯商品功能
   - 後台訂單管理
+  - 後台庫存管理
   - 資料庫
 
 - 張馨云 [GitHub](https://github.com/kirua05)
-  - Python 爬蟲清理商品資料，匯入至 PostgreSQL 資料庫
-  - 單一商品頁面
-  - AWS S3 雲端資料庫連接
+
+  - Python 爬蟲
+  - 單一商品頁面實作
+  - 上傳圖片功能
+  - AWS S3 雲端資料庫
+
 - 林欣雨 [GitHub](https://github.com/Raelin930)
+
   - 訂單管理頁面實作
   - 訂單 API
   - 網站 Landing Page
+
 - 巫坤郁 [GitHub](https://github.com/kenyykd)
+
   - 串接綠界金流
-  - 購物車詳細資料切版
-  - 商品標籤
-  - AI 串接
+  - 創建 Supabase 資料庫
+  - 商品分類標籤
+  - Gemini AI 串接
+
 - 謝聿涵 [GitHub](https://github.com/hsiehyuhan)
 
   - 購物車頁面
   - 串接購物車 API
   - 資料庫
-  - 加入購物車
+  - 加入購物車功能
 
 - 侯建男 [GitHub](https://github.com/Nannn1997)
 
-  - 網站首頁切版
-  - 商品資料串接
+  - 商品瀏覽頁、分頁
+  - 推薦商品功能
   - 搜尋商品功能
   - ZeaBur 部署專案
 
 - 楊子毅 [GitHub](https://github.com/ziyi1998)
+
   - 登入註冊功能
   - 會員編輯資料功能
-  - 第三方登入
+  - Google 第三方登入
+
 - 吳禹慧 [GitHub](https://github.com/rosewuuu)
-  - 通知頁面
+  - 通知頁面實作
   - 收藏功能
   - 資料庫
 
