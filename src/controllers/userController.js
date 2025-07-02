@@ -121,7 +121,7 @@ const updateProfile = async (req, res) => {
 
     await db
       .update(usersTable)
-      .set({ username, email, phone, address })
+      .set({ username, email, phone, address, updatedAt: new Date() })
       .where(eq(usersTable.id, userId));
 
     res.json({ message: '更新成功' });

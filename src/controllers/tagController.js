@@ -1,4 +1,4 @@
-const { eq, inArray, and } = require('drizzle-orm');
+const { eq, and } = require('drizzle-orm');
 const { tagsTable, typeEnum } = require('../models/tagSchema');
 const { productsTable } = require('../models/productSchema');
 const { productTagSTable } = require('../models/productTagSchema');
@@ -46,51 +46,41 @@ const tagsController = {
         return res.json({ products: [] });
       }
 
-      const tags = await db
-        .select({ id: tagsTable.id })
-        .from(tagsTable)
-        .where(eq(tagsTable.tagname, tagname));
-      if (tags.length === 0) {
-        return res.json({ products: [] });
-      }
-      const tagId = tags[0].id;
-
-      const productTagLinks = await db
-        .select({ productId: productTagSTable.productId })
-        .from(productTagSTable)
-        .where(eq(productTagSTable.tagId, tagId));
-      if (productTagLinks.length === 0) {
-        return res.json({ products: [] });
-      }
-      const productIds = productTagLinks.map((p) => p.productId);
-
       const products = await db
-        .select()
+        .select({
+          id: productsTable.id,
+          name: productsTable.name,
+          sku: productsTable.sku,
+          description: productsTable.description,
+          price: productsTable.price,
+          status: productsTable.status,
+          stockOnHand: productsTable.stockOnHand,
+          stockReserved: productsTable.stockReserved,
+          createdAt: productsTable.createdAt,
+          updatedAt: productsTable.updatedAt,
+          coverImage: productImagesTable.imgUrl,
+        })
         .from(productsTable)
-        .where(and(inArray(productsTable.id, productIds), eq(productsTable.status, 'active')));
-      if (products.length === 0) {
-        return res.json({ products: [] });
-      }
-
-      const activeProductIds = products.map((p) => p.id);
-      const coverImages = await db
-        .select({ productId: productImagesTable.productId, imgUrl: productImagesTable.imgUrl })
-        .from(productImagesTable)
-        .where(
+        .innerJoin(productTagSTable, eq(productsTable.id, productTagSTable.productId))
+        .innerJoin(tagsTable, eq(productTagSTable.tagId, tagsTable.id))
+        .leftJoin(
+          productImagesTable,
           and(
-            inArray(productImagesTable.productId, activeProductIds),
+            eq(productsTable.id, productImagesTable.productId),
             eq(productImagesTable.isCover, true)
           )
+        )
+        .where(
+          and(
+            eq(tagsTable.tagname, tagname),
+            eq(productsTable.status, 'active'),
+            eq(productsTable.isDeleted, false)
+          )
         );
-      const coverMap = new Map(coverImages.map((img) => [img.productId, img.imgUrl]));
 
-      const productsWithCovers = products.map((p) => ({
-        ...p,
-        coverImage: coverMap.get(p.id) || null,
-      }));
-
-      res.json({ products: productsWithCovers });
-    } catch {
+      res.json({ products });
+    } catch (error) {
+      console.error('Error in getProductsByTagnames:', error);
       res.status(500).json({ message: 'Internal server error' });
     }
   },

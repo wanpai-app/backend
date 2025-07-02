@@ -4,7 +4,7 @@ const { productImagesTable } = require('../models/productImageSchema');
 const { favoritesTable } = require('../models/favoriteSchema');
 const jwt = require('jsonwebtoken');
 
-const { inArray, eq, and, asc } = require('drizzle-orm');
+const { eq, and, asc } = require('drizzle-orm');
 const { deleteProductImages } = require('../services/productImageService');
 const { uploadProductImage } = require('../controllers/productImageController');
 
@@ -13,46 +13,43 @@ const getAllProducts = async (req, res) => {
 
   try {
     const status = req.query.status;
-    let query = db.select().from(productsTable).orderBy(productsTable.id);
 
+    let baseCondition;
     if (!isAdmin) {
-      query = query.where(
-        and(eq(productsTable.isDeleted, false), eq(productsTable.status, 'active'))
-      );
+      baseCondition = and(eq(productsTable.isDeleted, false), eq(productsTable.status, 'active'));
     } else if (status && status !== 'all') {
-      query = query.where(
-        and(eq(productsTable.isDeleted, false), eq(productsTable.status, status))
-      );
+      baseCondition = and(eq(productsTable.isDeleted, false), eq(productsTable.status, status));
     } else if (isAdmin) {
-      query = query.where(eq(productsTable.isDeleted, false));
+      baseCondition = eq(productsTable.isDeleted, false);
     }
 
-    const products = await query;
-    if (products.length === 0) return res.json([]);
-
-    const productIds = products.map((p) => p.id);
-
-    const coverImages = await db
+    const products = await db
       .select({
-        productId: productImagesTable.productId,
-        imgUrl: productImagesTable.imgUrl,
+        id: productsTable.id,
+        name: productsTable.name,
+        sku: productsTable.sku,
+        description: productsTable.description,
+        price: productsTable.price,
+        status: productsTable.status,
+        stockOnHand: productsTable.stockOnHand,
+        stockReserved: productsTable.stockReserved,
+        createdAt: productsTable.createdAt,
+        updatedAt: productsTable.updatedAt,
+        isDeleted: productsTable.isDeleted,
+        coverImage: productImagesTable.imgUrl,
       })
-      .from(productImagesTable)
-      .where(
-        and(inArray(productImagesTable.productId, productIds), eq(productImagesTable.isCover, true))
-      );
+      .from(productsTable)
+      .leftJoin(
+        productImagesTable,
+        and(
+          eq(productsTable.id, productImagesTable.productId),
+          eq(productImagesTable.isCover, true)
+        )
+      )
+      .where(baseCondition)
+      .orderBy(productsTable.id);
 
-    const coverMap = new Map();
-    for (const img of coverImages) {
-      coverMap.set(img.productId, img.imgUrl);
-    }
-
-    const productsWithCovers = products.map((p) => ({
-      ...p,
-      coverImage: coverMap.get(p.id) || null,
-    }));
-
-    res.json(productsWithCovers);
+    res.json(products);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -128,6 +125,10 @@ const createProduct = async (req, res) => {
           description: req.body.description,
           price: req.body.price,
           status: req.body.status || 'draft',
+          stockOnHand: req.body.stockOnHand || 0,
+          stockReserved: req.body.stockReserved || 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         })
         .returning();
 
@@ -163,6 +164,7 @@ const updateProduct = async (req, res) => {
           description: req.body.description,
           price: req.body.price,
           status: req.body.status || 'active',
+          updatedAt: new Date(),
         })
         .where(eq(productsTable.id, id))
         .returning();
