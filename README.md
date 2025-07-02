@@ -29,9 +29,10 @@
 商家帳號有權限開啟後台管理頁面，自由上下架商品，編輯商品資訊、管理商品及訂單。
 
 <img width="590" alt="image" src="https://github.com/user-attachments/assets/9ff9bfe0-8ad3-45eb-b45a-c7220d435aee" />
-<img width="588" alt="image" src="https://github.com/user-attachments/assets/3622479d-67ad-4d72-820d-8f43b4b6788c" />
-<img width="586" alt="image" src="https://github.com/user-attachments/assets/7452451e-5996-481b-9833-8d24fe3a091a" />
-<img width="582" alt="image" src="https://github.com/user-attachments/assets/101a6e88-7073-4bcb-90be-e3699f997447" />
+<img width="590" alt="image" src="https://github.com/user-attachments/assets/acdbf69b-5829-4d68-a83a-f576be3310a1" />
+<img width="590" alt="image" src="https://github.com/user-attachments/assets/3622479d-67ad-4d72-820d-8f43b4b6788c" />
+<img width="590" alt="image" src="https://github.com/user-attachments/assets/7452451e-5996-481b-9833-8d24fe3a091a" />
+<img width="590" alt="image" src="https://github.com/user-attachments/assets/101a6e88-7073-4bcb-90be-e3699f997447" />
 
 ## 使用技術
 
