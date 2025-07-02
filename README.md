@@ -45,6 +45,7 @@
 - Zod
 - ECPayAIO_Node.js（綠界金流）
 - AWS S3
+- Google Gemini API
 
 ## 後端功能簡介
 
@@ -53,6 +54,7 @@
 - Zod 驗證處理輸入資料
 - Admin 權限管理
 - AWS S3（圖片儲存）
+- Google Gemini API 串接
 
 ## 安裝及執行步驟
 
@@ -143,7 +145,7 @@ GEMINI_API_KEY=
   - 串接綠界金流
   - 創建 Supabase 資料庫
   - 商品分類標籤
-  - Gemini AI 串接
+  - Gemini API 串接
 
 - 謝聿涵 [GitHub](https://github.com/hsiehyuhan)
 
