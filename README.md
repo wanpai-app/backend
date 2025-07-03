@@ -157,7 +157,7 @@ GEMINI_API_KEY=
 - 侯建男 [GitHub](https://github.com/Nannn1997)
 
   - 商品瀏覽頁、分頁
-  - 推薦商品功能
+  - 推薦商品 API
   - 搜尋商品功能
   - ZeaBur 部署專案
 
