@@ -46,6 +46,8 @@
 - ECPayAIO_Node.js（綠界金流）
 - AWS S3
 - Google Gemini API
+- 使用 GitHub Actions 自動執行 ESLint 與 Prettier 格式檢查，以確保程式碼一致性
+
 
 ## 後端功能簡介
 
